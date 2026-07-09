@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: kerdion_postgres
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - kerdion_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: kerdion_redis
+    restart: always
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - kerdion_network
+
+  api:
+    build: .
+    container_name: kerdion_api
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - kerdion_network
+
+  celery_worker:
+    build: .
+    container_name: kerdion_celery_worker
+    restart: always
+    command: celery -A app.worker.celery_app worker --loglevel=info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - kerdion_network
+
+volumes:
+  postgres_data:
+
+networks:
+  kerdion_network:
+    driver: bridge

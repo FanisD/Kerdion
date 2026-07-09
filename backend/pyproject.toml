@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "crypto-platform-backend"
+name = "kerdion-backend"
 version = "0.1.0"
-description = "Real-time cryptocurrency volatility forecasting API"
-authors = ["Your Name <your.email@example.com>"]
+description = "Kerdion: Real-time cryptocurrency volatility forecasting platform"
+authors = ["Fanis Dimitriou"]
 readme = "README.md"
 
 [tool.poetry.dependencies]

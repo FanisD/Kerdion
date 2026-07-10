@@ -1,5 +1,5 @@
 # ==========================================
-# Build Dependencies
+# Stage 1: Build Dependencies
 # ==========================================
 FROM python:3.12-slim AS builder
 
@@ -12,9 +12,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Poetry
+# Install Poetry using the updated official installer URL
 ENV POETRY_VERSION=1.8.2
-RUN curl -sSL https://python-poetry.org/install.sh | python3 -
+RUN curl -sSL https://install.python-poetry.org | python3 -
 ENV PATH="/root/.local/bin:$PATH"
 
 # Copy dependency files first (this maximizes Docker layer caching)
@@ -26,7 +26,7 @@ RUN poetry config virtualenvs.create false \
     && poetry install --no-interaction --no-ansi --no-root --only main
 
 # ==========================================
-# Final Production Runtime Image
+# Stage 2: Final Production Runtime Image
 # ==========================================
 FROM python:3.12-slim AS runtime
 

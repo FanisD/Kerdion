@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { VolatilityChart } from "@/components/VolatilityChart";
 import { PredictionTable } from "@/components/PredictionTable";
+import { ModelMetadata } from "@/components/ModelMetadata";
 import { getMockPairs, getPredictionHistory } from "@/lib/mockData";
 
 const STYLES = {
@@ -40,6 +41,11 @@ export default async function PairDetailPage({
         <p className={STYLES.subheading}>
           Predicted vs. actual volatility (mock data)
         </p>
+      </div>
+
+      <div className={STYLES.section}>
+        <h2 className={STYLES.sectionTitle}>Model metadata</h2>
+        <ModelMetadata history={history} />
       </div>
 
       <div className={STYLES.section}>

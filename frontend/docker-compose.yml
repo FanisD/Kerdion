@@ -1,0 +1,26 @@
+include:
+  - ../backend/docker-compose.yml
+
+services:
+  frontend:
+    build:
+      context: .
+      target: runtime
+    container_name: kerdion_frontend
+    restart: always
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    env_file:
+      - .env
+    depends_on:
+      - api
+    networks:
+      - kerdion_network
+
+networks:
+  kerdion_network:
+    driver: bridge

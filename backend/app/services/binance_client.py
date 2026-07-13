@@ -70,7 +70,7 @@ class BinanceClient:
         df.sort_index(inplace=True)
         
         # Forward-fill any accidental missing values (NaNs) just like Notebook 1
-        df.fillna(method='ffill', inplace=True)
+        df.ffill(inplace=True)
         
         logger.info(f"Successfully constructed DataFrame of shape: {df.shape}")
         return df
@@ -82,8 +82,13 @@ binance_data_fetcher = BinanceClient()
 # TEST BLOCK (Runs only if you execute this file directly)
 # ==========================================
 if __name__ == "__main__":
-    import nest_asyncio
-    nest_asyncio.apply()
+    try:
+        import nest_asyncio
+    except ModuleNotFoundError:
+        nest_asyncio = None
+
+    if nest_asyncio is not None:
+        nest_asyncio.apply()
 
     async def run_test():
         fetcher = BinanceClient()

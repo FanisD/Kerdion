@@ -7,20 +7,39 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
+# ==========================================
+# 1. ADDED BY US: Import our App Configurations
+# ==========================================
+import os
+import sys
+
+# Add the root project directory to the Python path so Alembic can find the 'app' module
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
+from app.core.config import settings
+from app.core.database import Base
+import app.models  # This imports the __init__.py we made, forcing the models to load
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+# ==========================================
+# 2. ADDED BY US: Inject the Database URL from .env
+# ==========================================
+# This overrides the hardcoded URL in alembic.ini with our secure local .env variable
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-target_metadata = None
+# ==========================================
+# 3. MODIFIED BY US: Point Alembic to our metadata
+# ==========================================
+# Alembic will compare this metadata against the actual Postgres database to see what changed
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

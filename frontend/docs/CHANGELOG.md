@@ -12,3 +12,7 @@ All notable changes to the frontend are logged here, grouped by roadmap phase (s
 - Added `src/lib/mockData.ts` — fixture predictions matching the backend's `prediction` table shape (`id, timestamp, cryptocurrency_pair, model_used, predicted_volatility, actual_volatility_later`), so pages render without a live API.
 - Added a login page (`src/app/login/page.tsx`) and route gate (`src/proxy.ts`) enforcing a single shared dashboard credential (`DASHBOARD_USERNAME` / `DASHBOARD_PASSWORD`).
 
+## Phase 1, Task 1: PairCard component
+
+- Added `src/components/PairCard.tsx` — extracted from the inline Overview card markup, now shows pair, model used, predicted volatility, and a dependency-free SVG sparkline of recent predicted volatility.
+- Overview page (`src/app/page.tsx`) now renders `PairCard` per tracked pair instead of inline JSX.

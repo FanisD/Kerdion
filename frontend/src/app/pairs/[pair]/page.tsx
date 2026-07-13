@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { VolatilityChart } from "@/components/VolatilityChart";
 import { getMockPairs, getPredictionHistory } from "@/lib/mockData";
 
 const STYLES = {
@@ -9,7 +10,6 @@ const STYLES = {
   subheading: "text-sm text-zinc-600 dark:text-zinc-400",
   section: "rounded-2xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-zinc-950",
   sectionTitle: "mb-3 text-sm font-medium text-black dark:text-zinc-50",
-  placeholder: "flex h-64 items-center justify-center rounded-xl border border-dashed border-black/10 text-sm text-zinc-500 dark:border-white/10 dark:text-zinc-500",
   table: "w-full text-left text-sm",
   th: "border-b border-black/10 pb-2 pr-4 font-medium text-zinc-500 dark:border-white/10 dark:text-zinc-500",
   td: "border-b border-black/5 py-2 pr-4 text-black dark:border-white/5 dark:text-zinc-100",
@@ -48,7 +48,7 @@ export default async function PairDetailPage({
 
       <div className={STYLES.section}>
         <h2 className={STYLES.sectionTitle}>Volatility chart</h2>
-        <div className={STYLES.placeholder}>Chart coming in Phase 1</div>
+        <VolatilityChart history={history} />
       </div>
 
       <div className={STYLES.section}>

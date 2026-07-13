@@ -17,6 +17,10 @@ celery = "^5.3.6"             # Background task queue
 pandas = "^2.2.1"             # Data manipulation for ML
 numpy = "^1.26.4"             # Array calculations for ML
 pydantic-settings = "^2.2.1"  # Validates our .env variables
+torch = "^2.13.0"
+scikit-learn = "^1.9.0"
+arch = "^8.0.0"
+joblib = "^1.5.3"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.1.1"             # Testing framework

@@ -16,3 +16,9 @@ All notable changes to the frontend are logged here, grouped by roadmap phase (s
 
 - Added `src/components/PairCard.tsx` — extracted from the inline Overview card markup, now shows pair, model used, predicted volatility, and a dependency-free SVG sparkline of recent predicted volatility.
 - Overview page (`src/app/page.tsx`) now renders `PairCard` per tracked pair instead of inline JSX.
+
+## Phase 1, Task 2: VolatilityChart component
+
+- Added `lightweight-charts` dependency.
+- Added `src/components/VolatilityChart.tsx` — client component rendering predicted vs. actual volatility as two line series.
+- Pair Detail page (`src/app/pairs/[pair]/page.tsx`) now renders `VolatilityChart` in place of the Phase 0 placeholder.

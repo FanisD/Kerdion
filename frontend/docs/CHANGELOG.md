@@ -32,3 +32,12 @@ All notable changes to the frontend are logged here, grouped by roadmap phase (s
 
 - Added `src/components/ConnectionStatusBadge.tsx` — shows connection status (`connected` / `reconnecting` / `disconnected`) as a colored dot + label. Defaults to `disconnected` for now since there's no live WebSocket yet; will be wired to real socket state in Phase 3.
 - Nav shell (`src/app/layout.tsx`) now renders `ConnectionStatusBadge` next to the Overview link.
+
+## Phase 1, Task 5: Overview page grid + empty state
+
+- No code changes needed — already satisfied by Task 1: the Overview page renders a grid of `PairCard`s from mock data and has an empty state ("No tracked pairs yet.") when there are no tracked pairs. A loading state is deferred to Phase 2, since the page currently reads mock data synchronously and has no real fetch to show a loading state for.
+
+## Phase 1, Task 6: Pair Detail model metadata block
+
+- Added `src/components/ModelMetadata.tsx` — summarizes current model, all models used, prediction count, and earliest timestamp for a pair's history.
+- Pair Detail page (`src/app/pairs/[pair]/page.tsx`) now renders `ModelMetadata` above the volatility chart, completing the page's Task 2/3 wiring (`VolatilityChart` + `PredictionTable` + model metadata).

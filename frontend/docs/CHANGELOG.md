@@ -45,3 +45,10 @@ All notable changes to the frontend are logged here, grouped by roadmap phase (s
 ## Phase 1, Task 7: STYLES convention audit
 
 - No code changes needed — audited every component and page (`grep` for `className=` not routed through `STYLES`, and for files missing a top-level `STYLES` object). All 8 files already comply: every `className` references `STYLES`, and every component/page defines its own `STYLES` object, per the repo's `CLAUDE.md` convention.
+
+## Phase 1, Task 8: Design pass — spacing/consistency polish
+
+- Kept the existing neutral (zinc) + cyan palette and system font, no new visual direction introduced.
+- Standardized secondary/muted text color across all components and pages: `text-zinc-500 dark:text-zinc-500` (which didn't adapt between themes) replaced with `text-zinc-600 dark:text-zinc-400` everywhere (`ConnectionStatusBadge`, `ModelMetadata`, `PairCard`, `PredictionTable`, Overview empty state).
+- Standardized primary text color in `PredictionTable`'s table cells from `dark:text-zinc-100` to `dark:text-zinc-50`, matching every other component's primary-text value.
+- Verified border-radius (`rounded-2xl` for cards/sections, `rounded-lg` for inputs) and container padding (`px-6 py-10`) were already consistent across pages — no changes needed there.

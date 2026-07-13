@@ -1,7 +1,7 @@
 export type ConnectionStatus = "connected" | "reconnecting" | "disconnected";
 
 const STYLES = {
-  badge: "flex items-center gap-2 text-xs font-medium text-zinc-500 dark:text-zinc-500",
+  badge: "flex items-center gap-2 text-xs font-medium text-zinc-600 dark:text-zinc-400",
   dot: (status: ConnectionStatus) =>
     [
       "h-2 w-2 rounded-full",

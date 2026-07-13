@@ -4,9 +4,9 @@ import type { Prediction } from "@/lib/mockData";
 const STYLES = {
   card: "flex flex-col gap-2 rounded-2xl border border-black/10 bg-white p-5 transition-colors hover:border-black/20 dark:border-white/10 dark:bg-zinc-950 dark:hover:border-white/20",
   pair: "text-lg font-semibold text-black dark:text-zinc-50",
-  model: "text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500",
+  model: "text-xs font-medium uppercase tracking-wide text-zinc-600 dark:text-zinc-400",
   volatility: "text-2xl font-semibold tabular-nums text-black dark:text-zinc-50",
-  label: "text-xs text-zinc-500 dark:text-zinc-500",
+  label: "text-xs text-zinc-600 dark:text-zinc-400",
   sparkline: "text-cyan-600 dark:text-cyan-400",
 };
 

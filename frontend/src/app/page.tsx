@@ -6,7 +6,7 @@ const STYLES = {
   heading: "text-2xl font-semibold tracking-tight text-black dark:text-zinc-50",
   subheading: "text-sm text-zinc-600 dark:text-zinc-400",
   grid: "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3",
-  empty: "text-sm text-zinc-500 dark:text-zinc-500",
+  empty: "text-sm text-zinc-600 dark:text-zinc-400",
 };
 
 export default function OverviewPage() {

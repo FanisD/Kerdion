@@ -58,7 +58,7 @@ No color palette, typography, or component-level styling decisions yet — that'
 - [p1-t4] `src/components/ConnectionStatusBadge.tsx` — WebSocket up/down indicator (static for now, wired in Phase 3).
 - [p1-t5] Overview page (`src/app/page.tsx`): grid of `PairCard`s from mock data, loading/empty states.
 - [p1-t6] Pair Detail page (`src/app/pairs/[pair]/page.tsx`): `VolatilityChart` + `PredictionTable` + model metadata block, from mock data.
-- [p1-t7] Every component above defines its own top-level `const STYLES` object per repo convention (see root `CLAUDE.md`) — no inline Tailwind classes in JSX.
+- [p1-t7] Every component above defines its own top-level `const STYLES` object per repo convention — no inline Tailwind classes in JSX.
 - [p1-t8] Design pass: pick final palette/typography/spacing once real components exist to style against.
 
 

@@ -2,8 +2,8 @@ import type { Prediction } from "@/lib/mockData";
 
 const STYLES = {
   table: "w-full text-left text-sm",
-  th: "border-b border-black/10 pb-2 pr-4 font-medium text-zinc-500 dark:border-white/10 dark:text-zinc-500",
-  td: "border-b border-black/5 py-2 pr-4 text-black dark:border-white/5 dark:text-zinc-100",
+  th: "border-b border-black/10 pb-2 pr-4 font-medium text-zinc-600 dark:border-white/10 dark:text-zinc-400",
+  td: "border-b border-black/5 py-2 pr-4 text-black dark:border-white/5 dark:text-zinc-50",
 };
 
 export function PredictionTable({ history }: { history: Prediction[] }) {

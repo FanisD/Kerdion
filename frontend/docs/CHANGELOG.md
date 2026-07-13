@@ -41,3 +41,7 @@ All notable changes to the frontend are logged here, grouped by roadmap phase (s
 
 - Added `src/components/ModelMetadata.tsx` — summarizes current model, all models used, prediction count, and earliest timestamp for a pair's history.
 - Pair Detail page (`src/app/pairs/[pair]/page.tsx`) now renders `ModelMetadata` above the volatility chart, completing the page's Task 2/3 wiring (`VolatilityChart` + `PredictionTable` + model metadata).
+
+## Phase 1, Task 7: STYLES convention audit
+
+- No code changes needed — audited every component and page (`grep` for `className=` not routed through `STYLES`, and for files missing a top-level `STYLES` object). All 8 files already comply: every `className` references `STYLES`, and every component/page defines its own `STYLES` object, per the repo's `CLAUDE.md` convention.

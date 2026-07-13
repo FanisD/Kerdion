@@ -22,3 +22,8 @@ All notable changes to the frontend are logged here, grouped by roadmap phase (s
 - Added `lightweight-charts` dependency.
 - Added `src/components/VolatilityChart.tsx` — client component rendering predicted vs. actual volatility as two line series.
 - Pair Detail page (`src/app/pairs/[pair]/page.tsx`) now renders `VolatilityChart` in place of the Phase 0 placeholder.
+
+## Phase 1, Task 3: PredictionTable component
+
+- Added `src/components/PredictionTable.tsx` — extracted from the inline Pair Detail table markup.
+- Pair Detail page (`src/app/pairs/[pair]/page.tsx`) now renders `PredictionTable` instead of inline JSX.

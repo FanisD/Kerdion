@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ConnectionStatusBadge } from "@/components/ConnectionStatusBadge";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -47,6 +48,7 @@ export default function RootLayout({
             <Link href="/" className={STYLES.navLink}>
               Overview
             </Link>
+            <ConnectionStatusBadge />
           </div>
         </nav>
         <main className={STYLES.main}>{children}</main>

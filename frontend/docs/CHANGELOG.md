@@ -27,3 +27,8 @@ All notable changes to the frontend are logged here, grouped by roadmap phase (s
 
 - Added `src/components/PredictionTable.tsx` — extracted from the inline Pair Detail table markup.
 - Pair Detail page (`src/app/pairs/[pair]/page.tsx`) now renders `PredictionTable` instead of inline JSX.
+
+## Phase 1, Task 4: ConnectionStatusBadge component
+
+- Added `src/components/ConnectionStatusBadge.tsx` — shows connection status (`connected` / `reconnecting` / `disconnected`) as a colored dot + label. Defaults to `disconnected` for now since there's no live WebSocket yet; will be wired to real socket state in Phase 3.
+- Nav shell (`src/app/layout.tsx`) now renders `ConnectionStatusBadge` next to the Overview link.

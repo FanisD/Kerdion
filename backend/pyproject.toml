@@ -21,11 +21,12 @@ torch = "^2.13.0"
 scikit-learn = "^1.9.0"
 arch = "^8.0.0"
 joblib = "^1.5.3"
+httpx = "^0.28.1"
 
-[tool.poetry.group.dev.dependencies]
+[tool.poetry.dev-dependencies]
 pytest = "^8.1.1"             # Testing framework
 ruff = "^0.3.5"               # Blazing fast linter and formatter
-httpx = "^0.27.0"             # Required for testing FastAPI endpoints
+httpx = "^0.28.1"             # Required for testing FastAPI endpoints
 
 [build-system]
 requires = ["poetry-core"]

@@ -138,19 +138,25 @@ class VolatilityPredictor:
         # 1. Feature Engineering: Calculate Log-Returns (Drops the first row -> 30 rows)
         log_returns = np.log(historical_df / historical_df.shift(1)).dropna()
         
-        # 2. Scale the data
-        scaled_data = self.scaler.transform(log_returns)
+        # 2. Scale the data (FIXED: Reshape to 1 feature for the scaler)
+        original_shape = log_returns.shape # (30, 10)
+        reshaped_returns = log_returns.values.reshape(-1, 1) # Flatten to 1 column
+        scaled_data_flat = self.scaler.transform(reshaped_returns)
+        scaled_data = scaled_data_flat.reshape(original_shape) # Restore to (30, 10)
         
         # 3. Convert to PyTorch Tensor [batch=1, time=30, nodes=10, channels=1]
         input_tensor = torch.tensor(scaled_data, dtype=torch.float32).unsqueeze(0).unsqueeze(-1).to(self.device)
         
         # 4. Forward Pass (Unpack the tuple)
         with torch.no_grad():
-            predictions_scaled, _ = self.stgnn_model(input_tensor) # Shape of predictions_scaled: [1, 10]
+            predictions_scaled, _ = self.stgnn_model(input_tensor) # Shape: [1, 10]
             
-        # 5. Inverse Transform
+        # 5. Inverse Transform (FIXED: Reshape to 1 feature for inverse)
         predictions_numpy = predictions_scaled.cpu().numpy()
-        predictions_actual = self.scaler.inverse_transform(predictions_numpy)
+        pred_original_shape = predictions_numpy.shape
+        pred_reshaped = predictions_numpy.reshape(-1, 1)
+        predictions_actual_flat = self.scaler.inverse_transform(pred_reshaped)
+        predictions_actual = predictions_actual_flat.reshape(pred_original_shape)
         
         # 6. Apply clipping and percentage conversion
         final_predictions = np.clip(predictions_actual * 100, a_min=0.1, a_max=None)

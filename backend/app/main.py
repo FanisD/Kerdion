@@ -38,4 +38,17 @@ async def test_database_insert(db: AsyncSession = Depends(get_db)):
 async def test_database_read(db: AsyncSession = Depends(get_db)):
     """Tests reading predictions from PostgreSQL"""
     predictions = await crud_predictions.get_predictions(db=db, limit=5)
-    return {"message": "Success!", "data": predictions}
+    
+    # FIX: Convert SQLAlchemy objects into plain Python dictionaries for JSON serialization
+    safe_data = [
+        {
+            "id": p.id,
+            "timestamp": p.timestamp.isoformat(),
+            "pair": p.cryptocurrency_pair,
+            "model": p.model_used,
+            "predicted_volatility": p.predicted_volatility
+        }
+        for p in predictions
+    ]
+    
+    return {"message": "Success!", "data": safe_data}

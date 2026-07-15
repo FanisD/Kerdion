@@ -1,4 +1,6 @@
 from typing import AsyncGenerator
+from fastapi import HTTPException
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import DeclarativeBase
 from app.core.config import settings
@@ -41,6 +43,15 @@ class Base(DeclarativeBase):
 # This function is injected into our FastAPI routes. It gives each user request 
 # its own database session and automatically closes it when the request is done.
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    # Quick connectivity check: confirm we can run a trivial query before
+    # handing a session to the route handler. If the DB is unreachable,
+    # raise a 503 so clients get a clear error instead of an internal 500.
+    try:
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+    except Exception as exc:  # pragma: no cover - hard to hit in CI
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}")
+
     async with AsyncSessionLocal() as session:
         try:
             yield session

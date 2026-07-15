@@ -1,4 +1,8 @@
+from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Absolute path to the .env file located in the backend package directory
+ENV_FILE_PATH = str(Path(__file__).resolve().parents[1] / ".env")
 
 class Settings(BaseSettings):
     # Core Settings
@@ -17,8 +21,10 @@ class Settings(BaseSettings):
     CELERY_BROKER_URL: str
     CELERY_RESULT_BACKEND: str
 
-    # This tells Pydantic to read from our .env file automatically
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    # This tells Pydantic to read from our .env file automatically.
+    # Use an absolute path relative to this package so the settings load
+    # correctly regardless of the current working directory.
+    model_config = SettingsConfigDict(env_file=ENV_FILE_PATH, extra="ignore")
 
 # Instantiate the settings so we can import it across the app
 settings = Settings()

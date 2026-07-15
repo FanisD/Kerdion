@@ -1,4 +1,7 @@
 import logging
+import json
+import asyncio
+import redis.asyncio as redis
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from typing import List
 
@@ -7,25 +10,14 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 class ConnectionManager:
-    """
-    Manages active WebSocket connections.
-    Tracks connected clients and handles broadcasting messages to all of them.
-    """
     def __init__(self):
-        # Store all active WebSocket connections in memory
         self.active_connections: List[WebSocket] = []
 
     async def connect(self, websocket: WebSocket):
-        # Accept the connection from the client
         await websocket.accept()
         self.active_connections.append(websocket)
         logger.info(f"New client connected! Total clients: {len(self.active_connections)}")
-        
-        # Send a welcome message so the client knows it worked
-        await websocket.send_json({
-            "type": "system",
-            "message": "Connected to Kerdion Live Prediction Stream"
-        })
+        await websocket.send_json({"type": "system", "message": "Connected to Kerdion Live Prediction Stream"})
 
     def disconnect(self, websocket: WebSocket):
         if websocket in self.active_connections:
@@ -33,31 +25,44 @@ class ConnectionManager:
             logger.info(f"Client disconnected. Total clients: {len(self.active_connections)}")
 
     async def broadcast(self, message: dict):
-        """Pushes a JSON payload to every single connected user."""
         for connection in self.active_connections:
             try:
                 await connection.send_json(message)
             except Exception as e:
-                logger.error(f"Failed to send message to a client: {e}")
+                logger.error(f"Failed to send message: {e}")
                 self.disconnect(connection)
 
-# Instantiate the global manager
-# (We will import this later in our Celery/Redis listener)
 manager = ConnectionManager()
+
+async def listen_to_redis():
+    """
+    Background task that connects to Redis Pub/Sub and listens for new predictions 
+    from the Celery worker, then broadcasts them to all connected WebSocket clients.
+    """
+    logger.info("Starting Redis Pub/Sub listener for WebSockets...")
+    
+    # Connect to the Redis container
+    async with redis.from_url("redis://redis:6379/0", decode_responses=True) as r:
+        pubsub = r.pubsub()
+        await pubsub.subscribe("live-predictions-channel")
+        
+        try:
+            # Infinite loop listening for messages
+            async for message in pubsub.listen():
+                if message["type"] == "message":
+                    logger.info(f"WebSocket Manager received data from Redis!")
+                    payload = json.loads(message["data"])
+                    await manager.broadcast(payload)
+        except asyncio.CancelledError:
+            logger.info("Redis listener shutting down...")
+        except Exception as e:
+            logger.error(f"Redis listener error: {e}")
 
 @router.websocket("/live-predictions")
 async def live_predictions_ws(websocket: WebSocket):
-    """
-    The actual endpoint the frontend connects to: ws://localhost:8000/api/v1/ws/live-predictions
-    """
     await manager.connect(websocket)
     try:
-        # Keep the connection alive indefinitely
         while True:
-            # We don't expect the frontend to send us data, but we must 
-            # listen for disconnects or ping/pongs to keep the socket from closing.
-            data = await websocket.receive_text()
-            logger.debug(f"Received message from client: {data}")
-            
+            await websocket.receive_text()
     except WebSocketDisconnect:
         manager.disconnect(websocket)

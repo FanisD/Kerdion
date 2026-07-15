@@ -5,6 +5,9 @@ from app.services.binance_client import binance_data_fetcher
 from app.services.ml_inference import ml_engine
 from app.core.database import AsyncSessionLocal
 from app.crud import crud_predictions
+import json
+import redis.asyncio as redis
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -50,8 +53,21 @@ async def _run_prediction_pipeline():
                     model_used="STGNN",
                     predicted_volatility=stgnn_volatility
                 )
-                
-        logger.info("Database insertion successful!")
+
+        logger.info("Publishing to Redis WebSockets channel...")
+        if stgnn_volatility is not None:
+            async with redis.from_url("redis://redis:6379/0", decode_responses=True) as r:
+                payload = {
+                    "type": "new_prediction",
+                    "data": {
+                        "cryptocurrency_pair": "BTCUSDT",
+                        "model_used": "STGNN",
+                        "predicted_volatility": stgnn_volatility,
+                        "timestamp": datetime.now(timezone.utc).isoformat()
+                    }
+                }
+                await r.publish("live-predictions-channel", json.dumps(payload))
+                logger.info("Successfully published to Redis!")
 
     except Exception as e:
         logger.error(f"Pipeline failed: {e}")

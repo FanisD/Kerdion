@@ -14,19 +14,25 @@ asyncpg = "^0.29.0"           # Async Postgres driver
 alembic = "^1.13.1"           # Database migrations
 redis = "^5.0.3"              # In-memory data structure store (Broker)
 celery = "^5.3.6"             # Background task queue
-pandas = "^2.2.1"             # Data manipulation for ML
-numpy = "^1.26.4"             # Array calculations for ML
 pydantic-settings = "^2.2.1"  # Validates our .env variables
-torch = "^2.13.0"
-scikit-learn = "^1.9.0"
-arch = "^8.0.0"
-joblib = "^1.5.3"
 httpx = "^0.28.1"
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 bcrypt = "^3.2.0"
 python-multipart = "^0.0.9"
 email-validator = "^2.1.1"
+
+# Heavy/slow-changing ML dependencies. Kept in their own group so the
+# Dockerfile can install them in an earlier, independently-cached layer -
+# adding/bumping a lightweight dep above shouldn't force torch et al. to
+# reinstall from scratch on every build.
+[tool.poetry.group.heavy.dependencies]
+pandas = "^2.2.1"             # Data manipulation for ML
+numpy = "^1.26.4"             # Array calculations for ML
+torch = "^2.13.0"
+scikit-learn = "^1.9.0"
+arch = "^8.0.0"
+joblib = "^1.5.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.1.1"             # Testing framework

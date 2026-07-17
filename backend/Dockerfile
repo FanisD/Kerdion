@@ -20,9 +20,23 @@ ENV PATH="/root/.local/bin:$PATH"
 # Copy dependency files first (this maximizes Docker layer caching)
 COPY pyproject.toml poetry.lock ./
 
-# Configure poetry to NOT create a virtual environment inside the container 
-# (since the container itself is isolated) and install only production dependencies
-RUN poetry config virtualenvs.create false \
+# Configure poetry to NOT create a virtual environment inside the container
+# (since the container itself is isolated) and install only production dependencies.
+#
+# The "heavy" group (torch, pandas, numpy, scikit-learn, arch, joblib) is
+# installed in its own layer first. These packages are large and rarely
+# change, so as long as pyproject.toml/poetry.lock are unchanged, Docker
+# reuses this layer instead of re-downloading everything. The "main" group
+# (FastAPI, auth libs, etc.) changes far more often and is installed
+# afterward in a separate, cheaper layer.
+# Mount Poetry/pip's package cache from the BuildKit cache store (not the
+# image itself). Even when pyproject.toml/poetry.lock change and a layer
+# above must reinstall, already-downloaded wheels (e.g. torch) are reused
+# from this cache instead of being re-fetched from PyPI on every build.
+RUN --mount=type=cache,target=/root/.cache/pypoetry \
+    --mount=type=cache,target=/root/.cache/pip \
+    poetry config virtualenvs.create false \
+    && poetry install --no-interaction --no-ansi --no-root --only heavy \
     && poetry install --no-interaction --no-ansi --no-root --only main
 
 # ==========================================

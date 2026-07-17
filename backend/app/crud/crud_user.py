@@ -1,0 +1,30 @@
+from typing import Optional
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.security import hash_password, verify_password
+from app.models.user import User
+
+
+async def get_user_by_email(db: AsyncSession, email: str) -> Optional[User]:
+    """Read a single user by their email address."""
+    result = await db.execute(select(User).where(User.email == email))
+    return result.scalars().first()
+
+
+async def create_user(db: AsyncSession, email: str, password: str) -> User:
+    """Insert a new user row with a hashed password."""
+    user = User(email=email, hashed_password=hash_password(password))
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
+async def authenticate_user(db: AsyncSession, email: str, password: str) -> Optional[User]:
+    """Return the user if the email exists and the password matches, else None."""
+    user = await get_user_by_email(db, email)
+    if user is None or not verify_password(password, user.hashed_password):
+        return None
+    return user

@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     ENVIRONMENT: str
     API_V1_STR: str
     SECRET_KEY: str
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
     # Database Settings
     DATABASE_URL: str

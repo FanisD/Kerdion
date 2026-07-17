@@ -65,6 +65,8 @@ docker compose exec api alembic upgrade head
 - **API Health**: Go to [http://localhost:8000/](http://localhost:8000/). You should see `{"status": "online"}`.
 - **Swagger UI**: Go to [http://localhost:8000/docs](http://localhost:8000/docs) to test endpoints.
 
+  As of Phase 5, most endpoints (e.g. `/api/v1/predictions/*`, the live-predictions WebSocket) require a valid JWT. Register a user via `POST /auth/register`, then log in via `POST /auth/login` to get an access token, then click **Authorize** in Swagger UI and paste the token in to test protected routes.
+
 ## 5. Daily Development Workflow
 
 **Code Changes**: Because we use Docker Volumes, you can edit code on your local machine and see changes immediately.
@@ -75,6 +77,23 @@ docker compose exec api alembic upgrade head
 docker compose exec api alembic revision --autogenerate -m "Description of change"
 docker compose exec api alembic upgrade head
 ```
+
+**Dependency Changes**: If you add or update a package in `pyproject.toml`, Docker Volumes won't help — the package has to actually be installed into the image. Regenerate the lock file, then rebuild:
+
+```bash
+poetry lock
+docker compose build api
+docker compose up -d api
+```
+
+`api` and `celery_worker` are built from the same Dockerfile but are **separate images** — Compose does not rebuild one when you rebuild the other. If your change affects code the worker also imports, rebuild it too:
+
+```bash
+docker compose build celery_worker
+docker compose up -d celery_worker
+```
+
+Heavy ML dependencies (`torch`, `pandas`, `numpy`, `scikit-learn`, `arch`, `joblib`) live in their own Poetry group and Docker layer, so day-to-day dependency changes shouldn't trigger a slow reinstall of those — only a genuine change to that group will.
 
 **Clean State**: If things get weird, nuke the environment and start fresh:
 
@@ -89,12 +108,15 @@ docker compose exec api alembic upgrade head
 - **Database Connection Issues**: If you see `database ... does not exist`, it's usually because Docker created a volume with old settings. Run `docker compose down -v` to reset everything.
 - **Service Crashing**: If `kerdion_celery_worker` keeps restarting, check the logs by running `docker compose logs -f celery_worker`.
 
-## Phase 1 & 2 Documentation
+## Phase Documentation
 
-For deeper dives into the project architecture and database schema, please refer to:
+For deeper dives into the project architecture, database schema, and features added in each phase, please refer to:
 
 - `PHASE_1_README.md`
 - `PHASE_2_README.md`
+- `PHASE_3_README.md`
+- `PHASE_4_README.md`
+- `PHASE_5_README.md`
 
 ---
 

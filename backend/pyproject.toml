@@ -22,6 +22,10 @@ scikit-learn = "^1.9.0"
 arch = "^8.0.0"
 joblib = "^1.5.3"
 httpx = "^0.28.1"
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+bcrypt = "^3.2.0"
+python-multipart = "^0.0.9"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.1.1"             # Testing framework

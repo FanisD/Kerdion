@@ -2,8 +2,12 @@ import logging
 import json
 import asyncio
 import redis.asyncio as redis
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from typing import List
+from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect, status
+from typing import List, Optional
+
+from app.core.database import AsyncSessionLocal
+from app.core.security import decode_access_token
+from app.crud.crud_user import get_user_by_email
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +63,18 @@ async def listen_to_redis():
             logger.error(f"Redis listener error: {e}")
 
 @router.websocket("/live-predictions")
-async def live_predictions_ws(websocket: WebSocket):
+async def live_predictions_ws(websocket: WebSocket, token: Optional[str] = Query(None)):
+    payload = decode_access_token(token) if token else None
+    if payload is None or "sub" not in payload:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
+
+    async with AsyncSessionLocal() as db:
+        user = await get_user_by_email(db, payload["sub"])
+    if user is None or not user.is_active:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
+
     await manager.connect(websocket)
     try:
         while True:

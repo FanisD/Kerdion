@@ -28,7 +28,7 @@ We keep sensitive data in a local `.env.local` file (which is ignored by Git).
 cp .env.example .env.local
 ```
 
-Open the new `.env.local` file and fill in the values based on `.env.example`. At minimum you'll want to set `DASHBOARD_USERNAME` / `DASHBOARD_PASSWORD` — these gate the whole dashboard behind a single shared login (see Section 4).
+Open the new `.env.local` file and fill in the values based on `.env.example`. At minimum you'll need `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_WS_URL`, pointing at your running backend (see Section 4).
 
 **Install dependencies:**
 
@@ -44,7 +44,7 @@ npm install
 npm run dev
 ```
 
-The app will be available at [http://localhost:3000](http://localhost:3000).
+The app will be available at [http://localhost:3000](http://localhost:3000). Next.js picks the next free port, for example 3001, if 3000 is already in use.
 
 ### Option B: Docker (matches production, runs alongside the backend)
 
@@ -58,10 +58,11 @@ This uses `frontend/docker-compose.yml`, which `include`s `backend/docker-compos
 ## 4. Verification
 
 - **App loads**: Go to [http://localhost:3000/](http://localhost:3000/). You should be redirected to `/login`.
-- **Login**: Sign in with the `DASHBOARD_USERNAME` / `DASHBOARD_PASSWORD` values from your `.env.local`. On success you'll land on the Overview page showing tracked pairs.
-- **Pair Detail**: Click any pair card to see its volatility chart, model metadata, and prediction history table.
+- **Register**: Click through to `/register` and create an account. This calls the real backend (`POST /auth/register`).
+- **Login**: Sign in with the account you just created. On success you'll land on the Overview page showing tracked pairs, a live feed panel, and a connection status badge.
+- **Pair Detail**: Click any pair card to see its volatility chart (live-updating), model metadata, and prediction history table.
 
-All data shown right now is **mock data** (`src/lib/mockData.ts`) — the backend's real API (`GET /api/v1/predictions/{pair}`) doesn't exist yet, so nothing here reflects live predictions until Phase 2 of the frontend roadmap.
+All data shown is **real**, served by the backend's REST API (`GET /api/v1/predictions/{pair}`) and WebSocket stream (`ws://.../api/v1/ws/live-predictions`). See `PHASE_2_README.md` and `PHASE_3_README.md` for how the integration works. The backend must be running (see `backend/docs/Guide.md`) for any of this to work.
 
 ## 5. Daily Development Workflow
 
@@ -74,22 +75,24 @@ npm run build
 npx eslint .
 ```
 
-**Styling convention**: every component/page defines its own top-level `const STYLES` object (see root `CLAUDE.md`) — no inline Tailwind class strings in JSX.
+**Styling convention**: every component/page defines its own top-level `const STYLES` object (see root `CLAUDE.md`). No inline Tailwind class strings in JSX.
 
-**Branching**: each roadmap task gets its own branch off `dev` (e.g. `p1-t1`, `p1-t2`), merged back into `dev` via its own PR — see `FRONTEND_ROADMAP.md` for the full task list.
+**Branching**: each roadmap task gets its own branch off `dev` (for example `p3-t1-f`), merged back into `dev` via its own PR. See `FRONTEND_ROADMAP.md` for the full task list.
 
 ## ⚠️ Important Troubleshooting
 
-- **Stuck on `/login` after correct credentials**: double-check `DASHBOARD_USERNAME` / `DASHBOARD_PASSWORD` in `.env.local` match exactly what you're typing, and restart the dev server after changing them (env vars are only read at server start).
-- **Docker compose fails with "env file not found"**: Docker needs a real `.env` file, not just `.env.example` — run `cp .env.example .env` first.
+- **Stuck on `/login`**: register an account first (`/register`) if you don't have one. There's no shared credential anymore, auth is per-user against the real backend.
+- **WebSocket never connects / stuck "Reconnecting"**: confirm the backend is actually running and `NEXT_PUBLIC_WS_URL` in your env points at it. The client can't distinguish a down server from a stale token, so it retries with backoff either way (see `PHASE_3_README.md`).
+- **Docker compose fails with "env file not found"**: Docker needs a real `.env` file, not just `.env.example`. Run `cp .env.example .env` first.
 - **Stale build output**: if something looks wrong after pulling new changes, delete `.next/` and rebuild: `rm -rf .next && npm run dev`.
 
-## Roadmap & Changelog
+## Roadmap & Phase Documentation
 
-For the full phased plan and a log of what's been built so far, see:
+For the full phased plan and a deeper dive into what was built in each phase, see:
 
 - `../FRONTEND_ROADMAP.md`
-- `CHANGELOG.md`
+- `PHASE_0_README.md` through `PHASE_3_README.md`
+- `CHANGELOG.md` (task-level log for Phase 0 and 1, superseded by the phase READMEs going forward)
 
 ---
 

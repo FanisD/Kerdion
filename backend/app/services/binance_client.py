@@ -13,11 +13,9 @@ class BinanceClient:
     BASE_URL = "https://api.binance.com/api/v3/klines"
     
     # The exact 10 coins from your thesis (using standard Binance USDT pairs)
-    # Note: I added DOTUSDT as the 10th coin based on standard top-10 graphs, 
-    # please adjust if your 10th coin was AVAX or MATIC!
     TARGET_COINS = [
         "BTCUSDT", "ETHUSDT", "XRPUSDT", "LTCUSDT", "ADAUSDT", 
-        "BNBUSDT", "SOLUSDT", "DOGEUSDT", "TRXUSDT", "DOTUSDT"
+        "BNBUSDT", "SOLUSDT", "DOGEUSDT", "TRXUSDT", "LINKUSDT"
     ]
 
     async def _fetch_single_coin(self, client: httpx.AsyncClient, symbol: str, limit: int) -> pd.Series:

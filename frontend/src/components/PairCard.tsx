@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { Prediction } from "@/lib/mockData";
+import type { Prediction } from "@/lib/api";
 
 const STYLES = {
   card: "flex flex-col gap-2 rounded-2xl border border-black/10 bg-white p-5 transition-colors hover:border-black/20 dark:border-white/10 dark:bg-zinc-950 dark:hover:border-white/20",

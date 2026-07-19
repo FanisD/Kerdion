@@ -8,7 +8,7 @@ import {
   type IChartApi,
   type UTCTimestamp,
 } from "lightweight-charts";
-import type { Prediction } from "@/lib/mockData";
+import type { Prediction } from "@/lib/api";
 
 const STYLES = {
   container: "h-64 w-full",

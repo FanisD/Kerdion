@@ -1,4 +1,4 @@
-import type { Prediction } from "@/lib/mockData";
+import type { Prediction } from "@/lib/api";
 
 const STYLES = {
   table: "w-full text-left text-sm",

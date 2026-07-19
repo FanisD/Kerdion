@@ -63,22 +63,23 @@ No color palette, typography, or component-level styling decisions yet — that'
 
 
 
-### Phase 2: REST integration (Days 7-8, depends on backend Phase 4 `p4-t1`)
+### Phase 2: Real auth + REST integration (depends on backend Phase 5 auth, backend Phase 4 predictions API)
 
-- [p2-t1] `src/lib/api.ts` — typed fetch client for `GET /api/v1/predictions/{pair}`.
-- [p2-t2] Wire Overview and Pair Detail pages to real data, replacing `mockData.ts` calls.
-- [p2-t3] Error/loading states for real network conditions (API down, slow response, empty result set).
-- [p2-t4] Historical range selector (last 24h / 7d) if backend supports query params for it.
-- [p2-t5] Wire login gate to the real backend auth check (single shared credential) once backend defines it.
+Supersedes the original Phase 2 scope above. The backend now has real per-user JWT auth (`backend/docs/PHASE_5_README.md`: `POST /auth/register`, `POST /auth/login`, `USER`/`ADMIN` roles, every prediction REST + WebSocket route requires a Bearer token) — this replaces the single-shared-credential plan from "Decisions (locked in)" §1 below. Since the REST client was never built, this phase wires up real per-user login/register and real prediction data at the same time, as the API client can't be built without deciding how the JWT flows through it first.
+
+- [p2-t1] Auth API client + token storage: typed `register`/`login` calls against the backend, httpOnly cookie set via a Next.js Route Handler (avoids ever putting the raw JWT in `localStorage`), same-origin route to hand the token to client code for the WebSocket handshake (Phase 3).
+- [p2-t2] Replace the login page + gate: real login (email + password) and register pages calling the backend; update the route gate to check for a real JWT instead of the shared-credential sentinel; remove `DASHBOARD_USERNAME`/`DASHBOARD_PASSWORD`.
+- [p2-t3] `src/lib/api.ts` — typed fetch client for `GET /api/v1/predictions/` and `GET /api/v1/predictions/{pair}`, attaching `Authorization: Bearer <token>`. Wire Overview and Pair Detail pages to real data, replacing `mockData.ts` calls. Handle 401 by clearing the token and redirecting to `/login`.
+- [p2-t4] Historical range selector (last 24h / 7d) using the backend's `hours` query param. Error boundary / friendly error state if the backend is unreachable.
 
 
 
-### Phase 3: Live WebSocket feed (Days 9-10, depends on backend Phase 4 `p4-t2`/`p4-t3`)
+### Phase 3: Live WebSocket feed (depends on Phase 2 `p2-t1` for the token, not on `p2-t3`)
 
-- [p3-t1] `src/lib/wsClient.ts` — WebSocket wrapper with reconnect/backoff logic.
+- [p3-t1] `src/lib/wsClient.ts` — WebSocket wrapper with reconnect/backoff logic, appending `?token=<jwt>` per the backend's WebSocket auth contract. Treat close code `1008` (policy violation — bad/expired token) as an auth failure requiring re-login, not a generic disconnect to retry forever.
 - [p3-t2] Wire live feed panel to `ws://api/v1/ws/live-predictions`.
 - [p3-t3] Merge live updates into `VolatilityChart` (append new points without full refetch).
-- [p3-t4] `ConnectionStatusBadge` reflects real socket state (connected/reconnecting/down).
+- [p3-t4] `ConnectionStatusBadge` reflects real socket state (connected/reconnecting/down) instead of the current hardcoded "Offline".
 
 
 
@@ -103,7 +104,7 @@ No color palette, typography, or component-level styling decisions yet — that'
 
 ## Decisions (locked in)
 
-**1. Auth:** Yes, but scoped to a **single shared login** gating the whole dashboard (one env-configured username/password or API key) — not per-user accounts. This is new backend scope beyond the current Phase 1-2 boilerplate; needs a short discussion with backend owner on where the check lives (e.g. a simple middleware/dependency + login page) before frontend Phase 2 (REST integration) can fully wire it in. Frontend Phase 0-1 (mock-data UI) is unaffected and can proceed now; a basic login page/gate should be added to the frontend scaffolding.
+**1. Auth:** ~~Single shared login gating the whole dashboard (one env-configured username/password), not per-user accounts~~ — **superseded in Phase 2.** The backend shipped real per-user JWT auth (`backend/docs/PHASE_5_README.md`), so Phase 2 replaces the shared-credential gate with real register/login against `POST /auth/register` / `POST /auth/login`, `USER`/`ADMIN` roles, and a JWT attached to every REST + WebSocket request. The Phase 0 shared-credential login (`DASHBOARD_USERNAME`/`DASHBOARD_PASSWORD`) was a deliberate MVP stopgap for when the backend had no real auth system yet.
 
 **2. Type sync:** Hand-write matching TS interfaces mirroring the Pydantic `prediction` model (`id, timestamp, cryptocurrency_pair, model_used, predicted_volatility, actual_volatility_later`). Revisit codegen (`openapi-typescript`) later if drift becomes a problem.
 

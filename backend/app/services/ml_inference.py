@@ -13,6 +13,20 @@ logger = logging.getLogger(__name__)
 # 1. THESIS MODEL DEFINITION
 # ==========================================
 
+class GRUVolatilityModel(nn.Module):
+    """
+    Deep Learning Baseline (GRU) from Notebook 3.
+    """
+    def __init__(self, input_dim=1, hidden_dim=32, output_dim=1):
+        super(GRUVolatilityModel, self).__init__()
+        self.gru = nn.GRU(input_dim, hidden_dim, num_layers=2, batch_first=True, dropout=0.2)
+        self.fc = nn.Linear(hidden_dim, output_dim)
+
+    def forward(self, x):
+        out, _ = self.gru(x)
+        out = self.fc(out[:, -1, :]) 
+        return F.softplus(out)
+
 class AdaptiveGraphConv(nn.Module):
     """
     Recreation of your custom Graph Convolution layer to match the .pth keys.
@@ -113,6 +127,17 @@ class VolatilityPredictor:
             logger.error(f"Failed to load adaptive_stgnn.pth: {e}")
             self.stgnn_model = None
 
+        # Load the GRU Baseline Model
+        try:
+            self.gru_model = GRUVolatilityModel().to(self.device)
+            state_dict = torch.load("app/services/weights/gru_model.pth", map_location=self.device)
+            self.gru_model.load_state_dict(state_dict)
+            self.gru_model.eval()
+            logger.info("GRU Baseline loaded successfully.")
+        except Exception as e:
+            logger.error(f"Failed to load gru_model.pth: {e}")
+            self.gru_model = None
+
     # ==========================================
     # 3. PREDICTION METHODS
     # ==========================================
@@ -125,6 +150,39 @@ class VolatilityPredictor:
         forecasts = res.forecast(horizon=1)
         predicted_variance = forecasts.variance.iloc[-1, 0]
         return float(np.sqrt(predicted_variance))
+
+    def predict_gru(self, historical_prices: pd.Series) -> float:
+        """Deep Learning Baseline (From Notebook 3)."""
+        if self.gru_model is None or self.scaler is None:
+            raise RuntimeError("GRU Model or Scaler not loaded into memory.")
+
+        # 1. Feature Engineering: Calculate absolute Log-Returns (volatility proxy)
+        log_returns = np.log(historical_prices / historical_prices.shift(1)).dropna()
+        target_vol = np.abs(log_returns.values).reshape(-1, 1)
+        
+        # Keep only the last 14 days (sequence length for GRU)
+        target_vol = target_vol[-14:]
+        
+        if len(target_vol) < 14:
+            raise ValueError("Not enough data for GRU (needs at least 15 days of prices).")
+
+        # 2. Scale the data
+        scaled_data = self.scaler.transform(target_vol)
+        
+        # 3. Convert to Tensor: [Batch=1, Seq=14, Features=1]
+        input_tensor = torch.tensor(scaled_data, dtype=torch.float32).unsqueeze(0).to(self.device)
+        
+        # 4. Forward Pass
+        with torch.no_grad():
+            prediction_scaled = self.gru_model(input_tensor)
+            
+        # 5. Inverse Transform
+        prediction_actual = self.scaler.inverse_transform(prediction_scaled.cpu().numpy().reshape(-1, 1))
+        
+        # 6. Apply clipping and percentage conversion
+        final_prediction = np.clip(prediction_actual * 100, a_min=0.1, a_max=None)
+        
+        return float(final_prediction[0, 0])
 
     def predict_stgnn(self, historical_df: pd.DataFrame, target_coin_index: int = 0) -> float:
         """

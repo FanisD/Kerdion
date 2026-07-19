@@ -26,6 +26,11 @@ class Prediction(Base):
     # The output of your .npy / PyTorch model
     predicted_volatility: Mapped[float] = mapped_column(Float, nullable=False)
     
+    # Advanced performance and statistical tracking
+    qlike_score: Mapped[float] = mapped_column(Float, nullable=True)
+    ci_lower_bound: Mapped[float] = mapped_column(Float, nullable=True)
+    ci_upper_bound: Mapped[float] = mapped_column(Float, nullable=True)
+    
     # This is nullable (can be empty) because when we make a prediction for tomorrow, 
     # we don't know the actual volatility yet. A separate background task will update this later!
     actual_volatility_later: Mapped[float] = mapped_column(Float, nullable=True)

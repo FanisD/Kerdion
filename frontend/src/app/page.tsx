@@ -1,4 +1,5 @@
 import { ErrorState } from "@/components/ErrorState";
+import { LiveFeedPanel } from "@/components/LiveFeedPanel";
 import { PairCard } from "@/components/PairCard";
 import {
   getAllPredictions,
@@ -26,6 +27,8 @@ export default async function OverviewPage() {
           Predicted volatility across tracked pairs
         </p>
       </div>
+
+      <LiveFeedPanel />
 
       {!result.ok ? <ErrorState message={result.error} /> : <PairGrid predictions={result.data} />}
     </div>

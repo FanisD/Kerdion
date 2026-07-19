@@ -90,7 +90,7 @@ export default async function PairDetailPage({
 
           <div className={STYLES.section}>
             <h2 className={STYLES.sectionTitle}>Volatility chart</h2>
-            <VolatilityChart history={result.data} />
+            <VolatilityChart pair={pair} history={result.data} />
           </div>
 
           <div className={STYLES.section}>

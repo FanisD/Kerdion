@@ -6,8 +6,10 @@ import {
   ColorType,
   LineSeries,
   type IChartApi,
+  type ISeriesApi,
   type UTCTimestamp,
 } from "lightweight-charts";
+import { LivePredictionsClient, type LiveMessage } from "@/lib/wsClient";
 import type { Prediction } from "@/lib/api";
 
 const STYLES = {
@@ -21,9 +23,11 @@ function toChartTime(timestamp: string): UTCTimestamp {
   return Math.floor(new Date(timestamp).getTime() / 1000) as UTCTimestamp;
 }
 
-export function VolatilityChart({ history }: { history: Prediction[] }) {
+export function VolatilityChart({ pair, history }: { pair: string; history: Prediction[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
+  const predictedSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const actualSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -49,6 +53,7 @@ export function VolatilityChart({ history }: { history: Prediction[] }) {
       lineWidth: 2,
       title: "Predicted",
     });
+    predictedSeriesRef.current = predictedSeries;
     predictedSeries.setData(
       history.map((p) => ({
         time: toChartTime(p.timestamp),
@@ -64,6 +69,7 @@ export function VolatilityChart({ history }: { history: Prediction[] }) {
         lineStyle: 2,
         title: "Actual",
       });
+      actualSeriesRef.current = actualSeries;
       actualSeries.setData(
         actualPoints.map((p) => ({
           time: toChartTime(p.timestamp),
@@ -83,8 +89,42 @@ export function VolatilityChart({ history }: { history: Prediction[] }) {
       window.removeEventListener("resize", handleResize);
       chart.remove();
       chartRef.current = null;
+      predictedSeriesRef.current = null;
+      actualSeriesRef.current = null;
     };
   }, [history]);
+
+  // Separate from the effect above: live ticks append onto whatever series
+  // is currently rendered via .update(), without rebuilding the chart or
+  // refetching history. An explicit range switch still goes through the
+  // effect above (history reference changes) for a correct full reload.
+  useEffect(() => {
+    const client = new LivePredictionsClient();
+
+    const unsubscribe = client.onMessage((message: LiveMessage) => {
+      if (message.type !== "new_prediction") return;
+      if (message.data.cryptocurrency_pair !== pair) return;
+
+      predictedSeriesRef.current?.update({
+        time: toChartTime(message.data.timestamp),
+        value: message.data.predicted_volatility,
+      });
+
+      if (message.data.actual_volatility_later !== null) {
+        actualSeriesRef.current?.update({
+          time: toChartTime(message.data.timestamp),
+          value: message.data.actual_volatility_later,
+        });
+      }
+    });
+
+    client.connect();
+
+    return () => {
+      unsubscribe();
+      client.disconnect();
+    };
+  }, [pair]);
 
   return <div ref={containerRef} className={STYLES.container} />;
 }

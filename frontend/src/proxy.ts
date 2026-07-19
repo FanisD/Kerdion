@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { SESSION_COOKIE } from "@/lib/auth";
 
 export function proxy(request: NextRequest) {
-  const isAuthenticated = request.cookies.get(SESSION_COOKIE)?.value === "authenticated";
+  const isAuthenticated = Boolean(request.cookies.get(SESSION_COOKIE)?.value);
 
   if (!isAuthenticated) {
     const loginUrl = new URL("/login", request.url);
@@ -13,5 +13,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!login|api/auth|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!login|register|api/auth|_next/static|_next/image|favicon.ico).*)"],
 };

@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { loginRequest } from "@/lib/authClient";
+import { registerRequest } from "@/lib/authClient";
 
 const STYLES = {
   container: "flex flex-1 items-center justify-center px-6 py-10",
@@ -13,16 +13,13 @@ const STYLES = {
   label: "text-xs font-medium text-zinc-600 dark:text-zinc-400",
   input: "rounded-lg border border-black/10 bg-transparent px-3 py-2 text-sm text-black outline-none focus:border-black/30 dark:border-white/10 dark:text-zinc-50 dark:focus:border-white/30",
   error: "text-sm text-red-600 dark:text-red-400",
-  success: "text-sm text-emerald-600 dark:text-emerald-400",
   submit: "mt-2 rounded-lg bg-black px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-50 dark:text-black dark:hover:bg-zinc-200",
   footer: "text-sm text-zinc-600 dark:text-zinc-400",
   footerLink: "font-medium text-black hover:underline dark:text-zinc-50",
 };
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const registered = searchParams.get("registered") === "true";
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
 
@@ -32,21 +29,20 @@ export default function LoginPage() {
 
     const email = String(formData.get("email"));
     const password = String(formData.get("password"));
-    const result = await loginRequest({ email, password });
+    const result = await registerRequest({ email, password });
 
     setIsPending(false);
     if (result) {
       setError(result.error);
       return;
     }
-    router.push("/");
-    router.refresh();
+    router.push("/login?registered=true");
   }
 
   return (
     <div className={STYLES.container}>
       <form action={handleSubmit} className={STYLES.card}>
-        <h1 className={STYLES.heading}>Sign in to Kerdion</h1>
+        <h1 className={STYLES.heading}>Create your Kerdion account</h1>
 
         <div className={STYLES.field}>
           <label htmlFor="email" className={STYLES.label}>
@@ -62,19 +58,16 @@ export default function LoginPage() {
           <input id="password" name="password" type="password" required className={STYLES.input} />
         </div>
 
-        {registered && !error && (
-          <p className={STYLES.success}>Account created. Sign in below.</p>
-        )}
         {error && <p className={STYLES.error}>{error}</p>}
 
         <button type="submit" disabled={isPending} className={STYLES.submit}>
-          {isPending ? "Signing in..." : "Sign in"}
+          {isPending ? "Creating account..." : "Create account"}
         </button>
 
         <p className={STYLES.footer}>
-          No account?{" "}
-          <Link href="/register" className={STYLES.footerLink}>
-            Register
+          Already have an account?{" "}
+          <Link href="/login" className={STYLES.footerLink}>
+            Sign in
           </Link>
         </p>
       </form>

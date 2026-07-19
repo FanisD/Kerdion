@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ConnectionStatusBadge } from "@/components/ConnectionStatusBadge";
+import { LogoutButton } from "@/components/LogoutButton";
+import { getServerToken } from "@/lib/auth";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -29,11 +31,13 @@ const STYLES = {
   main: "flex flex-1 flex-col",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const isAuthenticated = Boolean(await getServerToken());
+
   return (
     <html
       lang="en"
@@ -49,6 +53,7 @@ export default function RootLayout({
               Overview
             </Link>
             <ConnectionStatusBadge />
+            {isAuthenticated && <LogoutButton />}
           </div>
         </nav>
         <main className={STYLES.main}>{children}</main>

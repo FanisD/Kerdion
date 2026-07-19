@@ -1,3 +1,8 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { LivePredictionsClient, type ConnectionStatus as WsConnectionStatus } from "@/lib/wsClient";
+
 export type ConnectionStatus = "connected" | "reconnecting" | "disconnected";
 
 const STYLES = {
@@ -19,11 +24,26 @@ const LABELS: Record<ConnectionStatus, string> = {
   disconnected: "Offline",
 };
 
-export function ConnectionStatusBadge({
-  status = "disconnected",
-}: {
-  status?: ConnectionStatus;
-}) {
+function toDisplayStatus(status: WsConnectionStatus): ConnectionStatus {
+  return status === "connected" || status === "reconnecting" ? status : "disconnected";
+}
+
+export function ConnectionStatusBadge({ trackLiveStatus = false }: { trackLiveStatus?: boolean }) {
+  const [status, setStatus] = useState<ConnectionStatus>("disconnected");
+
+  useEffect(() => {
+    if (!trackLiveStatus) return;
+
+    const client = new LivePredictionsClient();
+    const unsubscribe = client.onStatusChange((wsStatus) => setStatus(toDisplayStatus(wsStatus)));
+    client.connect();
+
+    return () => {
+      unsubscribe();
+      client.disconnect();
+    };
+  }, [trackLiveStatus]);
+
   return (
     <span className={STYLES.badge}>
       <span className={STYLES.dot(status)} />

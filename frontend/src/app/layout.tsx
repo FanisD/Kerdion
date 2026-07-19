@@ -52,7 +52,7 @@ export default async function RootLayout({
             <Link href="/" className={STYLES.navLink}>
               Overview
             </Link>
-            <ConnectionStatusBadge />
+            <ConnectionStatusBadge trackLiveStatus={isAuthenticated} />
             {isAuthenticated && <LogoutButton />}
           </div>
         </nav>

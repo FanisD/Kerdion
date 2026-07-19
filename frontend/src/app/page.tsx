@@ -1,5 +1,11 @@
+import { ErrorState } from "@/components/ErrorState";
 import { PairCard } from "@/components/PairCard";
-import { getAllPredictions, getLatestPrediction, groupPredictionsByPair } from "@/lib/api";
+import {
+  getAllPredictions,
+  getLatestPrediction,
+  groupPredictionsByPair,
+  type Prediction,
+} from "@/lib/api";
 
 const STYLES = {
   container: "mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-10",
@@ -10,9 +16,7 @@ const STYLES = {
 };
 
 export default async function OverviewPage() {
-  const predictions = await getAllPredictions();
-  const byPair = groupPredictionsByPair(predictions);
-  const pairs = Object.keys(byPair).sort();
+  const result = await getAllPredictions();
 
   return (
     <div className={STYLES.container}>
@@ -23,20 +27,29 @@ export default async function OverviewPage() {
         </p>
       </div>
 
-      {pairs.length === 0 ? (
-        <p className={STYLES.empty}>No tracked pairs yet.</p>
-      ) : (
-        <div className={STYLES.grid}>
-          {pairs.map((pair) => (
-            <PairCard
-              key={pair}
-              pair={pair}
-              latest={getLatestPrediction(byPair[pair])}
-              history={byPair[pair]}
-            />
-          ))}
-        </div>
-      )}
+      {!result.ok ? <ErrorState message={result.error} /> : <PairGrid predictions={result.data} />}
+    </div>
+  );
+}
+
+function PairGrid({ predictions }: { predictions: Prediction[] }) {
+  const byPair = groupPredictionsByPair(predictions);
+  const pairs = Object.keys(byPair).sort();
+
+  if (pairs.length === 0) {
+    return <p className={STYLES.empty}>No tracked pairs yet.</p>;
+  }
+
+  return (
+    <div className={STYLES.grid}>
+      {pairs.map((pair) => (
+        <PairCard
+          key={pair}
+          pair={pair}
+          latest={getLatestPrediction(byPair[pair])}
+          history={byPair[pair]}
+        />
+      ))}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import type { Prediction } from "@/lib/mockData";
+import type { Prediction } from "@/lib/api";
 
 const STYLES = {
   grid: "grid grid-cols-2 gap-4 sm:grid-cols-4",

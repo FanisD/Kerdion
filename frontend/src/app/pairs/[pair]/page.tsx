@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { VolatilityChart } from "@/components/VolatilityChart";
 import { PredictionTable } from "@/components/PredictionTable";
 import { ModelMetadata } from "@/components/ModelMetadata";
-import { getMockPairs, getPredictionHistory } from "@/lib/mockData";
+import { getPredictionsForPair } from "@/lib/api";
 
 const STYLES = {
   container: "mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-10",
@@ -14,17 +14,13 @@ const STYLES = {
   sectionTitle: "mb-3 text-sm font-medium text-black dark:text-zinc-50",
 };
 
-export function generateStaticParams() {
-  return getMockPairs().map((pair) => ({ pair }));
-}
-
 export default async function PairDetailPage({
   params,
 }: {
   params: Promise<{ pair: string }>;
 }) {
   const { pair } = await params;
-  const history = getPredictionHistory(pair);
+  const history = await getPredictionsForPair(pair);
 
   if (history.length === 0) {
     notFound();
@@ -39,7 +35,7 @@ export default async function PairDetailPage({
       <div>
         <h1 className={STYLES.heading}>{pair}</h1>
         <p className={STYLES.subheading}>
-          Predicted vs. actual volatility (mock data)
+          Predicted vs. actual volatility
         </p>
       </div>
 

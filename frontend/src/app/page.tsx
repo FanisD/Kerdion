@@ -1,5 +1,5 @@
 import { PairCard } from "@/components/PairCard";
-import { getLatestPrediction, getMockPairs, getPredictionHistory } from "@/lib/mockData";
+import { getAllPredictions, getLatestPrediction, groupPredictionsByPair } from "@/lib/api";
 
 const STYLES = {
   container: "mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-10",
@@ -9,15 +9,17 @@ const STYLES = {
   empty: "text-sm text-zinc-600 dark:text-zinc-400",
 };
 
-export default function OverviewPage() {
-  const pairs = getMockPairs();
+export default async function OverviewPage() {
+  const predictions = await getAllPredictions();
+  const byPair = groupPredictionsByPair(predictions);
+  const pairs = Object.keys(byPair).sort();
 
   return (
     <div className={STYLES.container}>
       <div>
         <h1 className={STYLES.heading}>Overview</h1>
         <p className={STYLES.subheading}>
-          Predicted volatility across tracked pairs (mock data)
+          Predicted volatility across tracked pairs
         </p>
       </div>
 
@@ -29,8 +31,8 @@ export default function OverviewPage() {
             <PairCard
               key={pair}
               pair={pair}
-              latest={getLatestPrediction(pair)}
-              history={getPredictionHistory(pair)}
+              latest={getLatestPrediction(byPair[pair])}
+              history={byPair[pair]}
             />
           ))}
         </div>

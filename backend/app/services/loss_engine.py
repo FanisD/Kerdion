@@ -73,3 +73,54 @@ def compute_pseudo_qlike(
     mean_vol = float(np.mean(valid_vols))
 
     return compute_qlike(predicted_volatility, mean_vol)
+
+
+# ==========================================
+# 95% CONFIDENCE INTERVAL DERIVATION ENGINE
+# From Thesis Notebook 3: print_error_confidence_intervals()
+# ==========================================
+
+Z_SCORE_95 = 1.96  # Standard normal critical value for 95% CI
+
+
+def compute_confidence_interval(
+    predicted_volatility: float,
+    historical_errors: list[float]
+) -> Optional[tuple[float, float]]:
+    """
+    Dynamically assigns lower and upper confidence limits around
+    a forward prediction using the historical standard deviation
+    of absolute errors (Std_AE) from past model performance.
+
+    Formula (from thesis):
+        CI = σ̂_{t+1} ± 1.96 × (Std_AE / √N)
+
+    Args:
+        predicted_volatility: The model's forward prediction for tomorrow.
+        historical_errors: List of absolute errors (|actual - predicted|)
+                           from recent validation/production runs.
+
+    Returns:
+        Tuple of (ci_lower, ci_upper), or None if insufficient data.
+    """
+    if not historical_errors or len(historical_errors) < 2:
+        logger.warning("CI skipped: need at least 2 historical error samples.")
+        return None
+
+    if predicted_volatility <= 0:
+        logger.warning(f"CI skipped: predicted_volatility={predicted_volatility} must be > 0.")
+        return None
+
+    errors = np.array(historical_errors, dtype=np.float64)
+    n = len(errors)
+
+    # Standard deviation of the absolute errors (ddof=1 for sample std, matching thesis)
+    std_ae = float(np.std(errors, ddof=1))
+
+    # Margin of error
+    margin = Z_SCORE_95 * (std_ae / np.sqrt(n))
+
+    ci_lower = max(0.0, predicted_volatility - margin)  # Volatility can't be negative
+    ci_upper = predicted_volatility + margin
+
+    return (float(ci_lower), float(ci_upper))

@@ -6,7 +6,8 @@ import numpy as np
 import pandas as pd
 import joblib
 from arch import arch_model
-
+import redis
+import json
 logger = logging.getLogger(__name__)
 
 # ==========================================
@@ -207,7 +208,15 @@ class VolatilityPredictor:
         
         # 4. Forward Pass (Unpack the tuple)
         with torch.no_grad():
-            predictions_scaled, _ = self.stgnn_model(input_tensor) # Shape: [1, 10]
+            predictions_scaled, learned_adj = self.stgnn_model(input_tensor) # Shape: [1, 10]
+            
+        # Extract topology matrix and cache to Redis synchronously
+        try:
+            adj_matrix = learned_adj.cpu().numpy().tolist()
+            r = redis.Redis(host="redis", port=6379, db=0, decode_responses=True)
+            r.set("kerdion:topology:latest", json.dumps(adj_matrix))
+        except Exception as e:
+            logger.error(f"Failed to cache Adjacency Matrix to Redis: {e}")
             
         # 5. Inverse Transform (FIXED: Reshape to 1 feature for inverse)
         predictions_numpy = predictions_scaled.cpu().numpy()

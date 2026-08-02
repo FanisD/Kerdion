@@ -13,6 +13,9 @@ async def create_prediction(
     model_used: str,
     predicted_volatility: float,
     actual_volatility_later: Optional[float] = None,
+    qlike_score: Optional[float] = None,
+    ci_lower_bound: Optional[float] = None,
+    ci_upper_bound: Optional[float] = None,
     timestamp: Optional[datetime] = None,
 ) -> Prediction:
     """Insert a new prediction row into the database."""
@@ -21,6 +24,9 @@ async def create_prediction(
         model_used=model_used,
         predicted_volatility=predicted_volatility,
         actual_volatility_later=actual_volatility_later,
+        qlike_score=qlike_score,
+        ci_lower_bound=ci_lower_bound,
+        ci_upper_bound=ci_upper_bound,
         timestamp=timestamp or datetime.now(timezone.utc),
     )
     db.add(prediction)

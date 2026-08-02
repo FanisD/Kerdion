@@ -124,3 +124,88 @@ def compute_confidence_interval(
     ci_upper = predicted_volatility + margin
 
     return (float(ci_lower), float(ci_upper))
+
+
+# ==========================================
+# ROLLING DIEBOLD-MARIANO TEST ENGINE
+# From Thesis Notebook 5: Robustness Check
+# ==========================================
+
+
+def compute_diebold_mariano(
+    actual_volatilities: list[float],
+    stgnn_predictions: list[float],
+    naive_predictions: list[float]
+) -> Optional[dict]:
+    """
+    Computes the Diebold-Mariano test statistic to determine whether
+    the Adaptive ST-GNN is statistically significantly better than
+    the Naive Persistence Baseline.
+
+    Naive Persistence Baseline: tomorrow's volatility = today's volatility.
+
+    Formula (from thesis):
+        d_t = e²_naive,t - e²_stgnn,t
+        DM  = d̄ / √(σ̂²_d̄ / T)
+
+    A positive DM stat with p < 0.05 means the ST-GNN is significantly
+    better than the naive model.
+
+    Args:
+        actual_volatilities: Realized volatilities (ground truth).
+        stgnn_predictions: ST-GNN model predictions aligned to actuals.
+        naive_predictions: Naive persistence predictions (previous day's actual).
+
+    Returns:
+        Dict with dm_statistic, p_value, and significance label, or None.
+    """
+    from scipy import stats
+
+    if len(actual_volatilities) < 10:
+        logger.warning("DM test skipped: need at least 10 aligned observations.")
+        return None
+
+    n = len(actual_volatilities)
+    if len(stgnn_predictions) != n or len(naive_predictions) != n:
+        logger.warning("DM test skipped: array lengths do not match.")
+        return None
+
+    actuals = np.array(actual_volatilities, dtype=np.float64)
+    stgnn = np.array(stgnn_predictions, dtype=np.float64)
+    naive = np.array(naive_predictions, dtype=np.float64)
+
+    # Squared errors
+    e_naive_sq = (actuals - naive) ** 2
+    e_stgnn_sq = (actuals - stgnn) ** 2
+
+    # Loss differentials: positive means naive is worse (ST-GNN is better)
+    d = e_naive_sq - e_stgnn_sq
+
+    d_bar = float(np.mean(d))
+    d_var = float(np.var(d, ddof=1))
+    T = len(d)
+
+    if d_var == 0:
+        logger.warning("DM test skipped: zero variance in loss differentials.")
+        return None
+
+    # DM Statistic
+    dm_stat = d_bar / np.sqrt(d_var / T)
+
+    # Two-sided p-value from t-distribution with T-1 degrees of freedom
+    p_value = float(2 * stats.t.sf(abs(dm_stat), df=T - 1))
+
+    # Interpret significance
+    if p_value < 0.05 and dm_stat > 0:
+        significance = "statistically_significant_positive"
+    elif p_value < 0.05 and dm_stat < 0:
+        significance = "statistically_significant_negative"
+    else:
+        significance = "not_significant"
+
+    return {
+        "dm_statistic": float(dm_stat),
+        "p_value": p_value,
+        "significance": significance,
+        "n_observations": T
+    }

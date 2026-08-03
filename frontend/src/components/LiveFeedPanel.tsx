@@ -59,7 +59,20 @@ export function LiveFeedPanel() {
     const unsubscribeStatus = client.onStatusChange(setStatus);
     const unsubscribeMessage = client.onMessage((message: LiveMessage) => {
       if (message.type !== "new_prediction") return;
-      setFeed((prev) => [message.data, ...prev].slice(0, MAX_FEED_ITEMS));
+      
+      const stgnn = message.models?.stgnn;
+      if (!stgnn) return;
+
+      const fakePrediction: Prediction = {
+        id: Date.now() + Math.random(),
+        timestamp: message.timestamp,
+        cryptocurrency_pair: message.cryptocurrency_pair,
+        model_used: "STGNN",
+        predicted_volatility: stgnn.predicted_volatility,
+        actual_volatility_later: null,
+      };
+
+      setFeed((prev) => [fakePrediction, ...prev].slice(0, MAX_FEED_ITEMS));
     });
 
     client.connect();

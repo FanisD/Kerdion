@@ -1,11 +1,11 @@
 import { getWsToken } from "@/lib/authClient";
-import type { Prediction } from "@/lib/api";
+import type { RosterResponse } from "@/lib/api";
 
 export type ConnectionStatus = "connected" | "reconnecting" | "disconnected" | "auth-failed";
 
 export type LiveMessage =
   | { type: "system"; message: string }
-  | { type: "new_prediction"; data: Prediction };
+  | ({ type: "new_prediction" } & RosterResponse);
 
 const WS_AUTH_FAILURE_CODE = 1008;
 const INITIAL_BACKOFF_MS = 1000;

@@ -49,7 +49,7 @@ async function fetchFromApi(path: string): Promise<Response | null> {
   return res;
 }
 
-export async function getAllPredictions(): Promise<ApiResult<Prediction[]>> {
+export async function getAllPredictions(): Promise<ApiResult<RosterResponse[]>> {
   const res = await fetchFromApi("/api/v1/predictions/");
   if (!res) return { ok: false, error: "Could not reach the prediction service." };
   if (!res.ok) return { ok: false, error: "The prediction service returned an error." };
@@ -59,19 +59,33 @@ export async function getAllPredictions(): Promise<ApiResult<Prediction[]>> {
 export async function getPredictionsForPair(
   pair: string,
   hours = 24,
-): Promise<ApiResult<Prediction[]>> {
+): Promise<ApiResult<RosterResponse[]>> {
   const res = await fetchFromApi(`/api/v1/predictions/${pair}?hours=${hours}`);
   if (!res) return { ok: false, error: "Could not reach the prediction service." };
   if (!res.ok) return { ok: false, error: "The prediction service returned an error." };
   return { ok: true, data: await res.json() };
 }
 
-export function getLatestPrediction(history: Prediction[]): Prediction | undefined {
+export async function getTopologyMatrix(): Promise<ApiResult<number[][]>> {
+  const res = await fetchFromApi("/api/v1/predictions/topology");
+  if (!res) return { ok: false, error: "Could not reach the prediction service." };
+  if (!res.ok) return { ok: false, error: "The prediction service returned an error." };
+  return { ok: true, data: await res.json() };
+}
+
+export async function getDieboldMarianoResult(): Promise<ApiResult<any>> {
+  const res = await fetchFromApi("/api/v1/predictions/dm-test");
+  if (!res) return { ok: false, error: "Could not reach the prediction service." };
+  if (!res.ok) return { ok: false, error: "The prediction service returned an error." };
+  return { ok: true, data: await res.json() };
+}
+
+export function getLatestPrediction(history: RosterResponse[]): RosterResponse | undefined {
   return history[history.length - 1];
 }
 
-export function groupPredictionsByPair(predictions: Prediction[]): Record<string, Prediction[]> {
-  const grouped: Record<string, Prediction[]> = {};
+export function groupPredictionsByPair(predictions: RosterResponse[]): Record<string, RosterResponse[]> {
+  const grouped: Record<string, RosterResponse[]> = {};
   for (const prediction of predictions) {
     const pair = prediction.cryptocurrency_pair;
     (grouped[pair] ??= []).push(prediction);

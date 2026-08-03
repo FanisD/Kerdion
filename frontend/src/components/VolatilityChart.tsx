@@ -36,6 +36,8 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Rost
   const garchSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
   const gruSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
   const stgnnSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const stgnnCiUpperRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const stgnnCiLowerRef = useRef<ISeriesApi<"Line"> | null>(null);
   const actualSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
 
   useEffect(() => {
@@ -60,21 +62,46 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Rost
     const garchSeries = chart.addSeries(LineSeries, { color: COLORS.garch, lineWidth: 2, title: "GARCH" });
     const gruSeries = chart.addSeries(LineSeries, { color: COLORS.gru, lineWidth: 2, title: "GRU" });
     const stgnnSeries = chart.addSeries(LineSeries, { color: COLORS.stgnn, lineWidth: 2, title: "ST-GNN" });
+    
+    const stgnnCiUpperSeries = chart.addSeries(LineSeries, {
+      color: "rgba(6, 182, 212, 0.4)",
+      lineWidth: 1,
+      lineStyle: 3,
+      title: "ST-GNN Upper CI",
+    });
+    const stgnnCiLowerSeries = chart.addSeries(LineSeries, {
+      color: "rgba(6, 182, 212, 0.4)",
+      lineWidth: 1,
+      lineStyle: 3,
+      title: "ST-GNN Lower CI",
+    });
 
     garchSeriesRef.current = garchSeries;
     gruSeriesRef.current = gruSeries;
     stgnnSeriesRef.current = stgnnSeries;
+    stgnnCiUpperRef.current = stgnnCiUpperSeries;
+    stgnnCiLowerRef.current = stgnnCiLowerSeries;
 
     const garchData: { time: UTCTimestamp; value: number }[] = [];
     const gruData: { time: UTCTimestamp; value: number }[] = [];
     const stgnnData: { time: UTCTimestamp; value: number }[] = [];
+    const stgnnCiUpperData: { time: UTCTimestamp; value: number }[] = [];
+    const stgnnCiLowerData: { time: UTCTimestamp; value: number }[] = [];
     const actualData: { time: UTCTimestamp; value: number }[] = [];
 
     history.forEach((p) => {
       const time = toChartTime(p.timestamp);
       if (p.models.garch) garchData.push({ time, value: p.models.garch.predicted_volatility });
       if (p.models.gru) gruData.push({ time, value: p.models.gru.predicted_volatility });
-      if (p.models.stgnn) stgnnData.push({ time, value: p.models.stgnn.predicted_volatility });
+      if (p.models.stgnn) {
+        stgnnData.push({ time, value: p.models.stgnn.predicted_volatility });
+        if (p.models.stgnn.ci_upper_bound != null) {
+          stgnnCiUpperData.push({ time, value: p.models.stgnn.ci_upper_bound });
+        }
+        if (p.models.stgnn.ci_lower_bound != null) {
+          stgnnCiLowerData.push({ time, value: p.models.stgnn.ci_lower_bound });
+        }
+      }
 
       // @ts-expect-error fallback if actual_volatility_later is still present in payload
       const actual = p.actual_volatility_later;
@@ -86,6 +113,8 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Rost
     garchSeries.setData(garchData);
     gruSeries.setData(gruData);
     stgnnSeries.setData(stgnnData);
+    stgnnCiUpperSeries.setData(stgnnCiUpperData);
+    stgnnCiLowerSeries.setData(stgnnCiLowerData);
 
     if (actualData.length > 0) {
       const actualSeries = chart.addSeries(LineSeries, {
@@ -113,6 +142,8 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Rost
       garchSeriesRef.current = null;
       gruSeriesRef.current = null;
       stgnnSeriesRef.current = null;
+      stgnnCiUpperRef.current = null;
+      stgnnCiLowerRef.current = null;
       actualSeriesRef.current = null;
     };
   }, [history]);
@@ -138,6 +169,12 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Rost
       }
       if (message.models.stgnn) {
         stgnnSeriesRef.current?.update({ time, value: message.models.stgnn.predicted_volatility });
+        if (message.models.stgnn.ci_upper_bound != null) {
+          stgnnCiUpperRef.current?.update({ time, value: message.models.stgnn.ci_upper_bound });
+        }
+        if (message.models.stgnn.ci_lower_bound != null) {
+          stgnnCiLowerRef.current?.update({ time, value: message.models.stgnn.ci_lower_bound });
+        }
       }
 
       // @ts-expect-error fallback

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { Prediction } from "@/lib/api";
+import type { RosterResponse } from "@/lib/api";
 
 const STYLES = {
   card: "flex flex-col gap-2 rounded-2xl border border-black/10 bg-white p-5 transition-colors hover:border-black/20 dark:border-white/10 dark:bg-zinc-950 dark:hover:border-white/20",
@@ -29,8 +29,10 @@ function buildSparklinePath(values: number[]): string {
   return `M${points.join(" L")}`;
 }
 
-function Sparkline({ history }: { history: Prediction[] }) {
-  const values = history.map((p) => p.predicted_volatility);
+function Sparkline({ history }: { history: RosterResponse[] }) {
+  const values = history
+    .map((p) => p.models?.stgnn?.predicted_volatility)
+    .filter((v): v is number => v !== undefined);
   const path = buildSparklinePath(values);
 
   if (!path) return null;
@@ -53,17 +55,36 @@ export function PairCard({
   history,
 }: {
   pair: string;
-  latest: Prediction | undefined;
-  history: Prediction[];
+  latest: RosterResponse | undefined;
+  history: RosterResponse[];
 }) {
+  const modelKeys = latest?.models ? Object.keys(latest.models) : [];
+  const modelCount = modelKeys.length;
+
+  const summaryParts = modelKeys.map((k) => {
+    const val = latest!.models[k].predicted_volatility.toFixed(2);
+    return `${k.toUpperCase()}: ${val}`;
+  });
+
+  const summaryString = summaryParts.join(" | ") || "—";
+
   return (
     <Link href={`/pairs/${pair}`} className={STYLES.card}>
-      <span className={STYLES.pair}>{pair}</span>
-      <span className={STYLES.model}>{latest?.model_used ?? "—"}</span>
+      <div className="flex items-center justify-between">
+        <span className={STYLES.pair}>{pair}</span>
+        {modelCount > 0 && (
+          <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+            {modelCount} Models
+          </span>
+        )}
+      </div>
+      <span className={STYLES.model}>{summaryString}</span>
       <span className={STYLES.volatility}>
-        {latest ? latest.predicted_volatility.toFixed(4) : "—"}
+        {latest?.models?.stgnn
+          ? latest.models.stgnn.predicted_volatility.toFixed(4)
+          : "—"}
       </span>
-      <span className={STYLES.label}>predicted volatility</span>
+      <span className={STYLES.label}>predicted volatility (ST-GNN)</span>
       <Sparkline history={history} />
     </Link>
   );

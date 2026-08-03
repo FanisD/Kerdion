@@ -10,23 +10,34 @@ import {
   type UTCTimestamp,
 } from "lightweight-charts";
 import { LivePredictionsClient, type LiveMessage } from "@/lib/wsClient";
-import type { Prediction } from "@/lib/api";
+import type { RosterResponse } from "@/lib/api";
 
 const STYLES = {
+  wrapper: "relative w-full",
   container: "h-64 w-full",
+  legend: "absolute top-2 left-2 z-10 flex flex-col gap-1 rounded bg-white/80 p-2 text-xs backdrop-blur dark:bg-zinc-950/80 shadow-sm border border-black/5 dark:border-white/5",
+  legendItem: "flex items-center gap-2",
 };
 
-const PREDICTED_COLOR = "#0891b2";
-const ACTUAL_COLOR = "#a1a1aa";
+const COLORS = {
+  garch: "#f97316",
+  gru: "#a855f7",
+  stgnn: "#06b6d4",
+  actual: "#a1a1aa",
+};
 
 function toChartTime(timestamp: string): UTCTimestamp {
   return Math.floor(new Date(timestamp).getTime() / 1000) as UTCTimestamp;
 }
 
-export function VolatilityChart({ pair, history }: { pair: string; history: Prediction[] }) {
+export function VolatilityChart({ pair, history }: { pair: string; history: RosterResponse[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
-  const predictedSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const garchSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const gruSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const stgnnSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const stgnnCiUpperRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const stgnnCiLowerRef = useRef<ISeriesApi<"Line"> | null>(null);
   const actualSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
 
   useEffect(() => {
@@ -48,34 +59,72 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Pred
     });
     chartRef.current = chart;
 
-    const predictedSeries = chart.addSeries(LineSeries, {
-      color: PREDICTED_COLOR,
-      lineWidth: 2,
-      title: "Predicted",
+    const garchSeries = chart.addSeries(LineSeries, { color: COLORS.garch, lineWidth: 2, title: "GARCH" });
+    const gruSeries = chart.addSeries(LineSeries, { color: COLORS.gru, lineWidth: 2, title: "GRU" });
+    const stgnnSeries = chart.addSeries(LineSeries, { color: COLORS.stgnn, lineWidth: 2, title: "ST-GNN" });
+    
+    const stgnnCiUpperSeries = chart.addSeries(LineSeries, {
+      color: "rgba(6, 182, 212, 0.4)",
+      lineWidth: 1,
+      lineStyle: 3,
+      title: "ST-GNN Upper CI",
     });
-    predictedSeriesRef.current = predictedSeries;
-    predictedSeries.setData(
-      history.map((p) => ({
-        time: toChartTime(p.timestamp),
-        value: p.predicted_volatility,
-      })),
-    );
+    const stgnnCiLowerSeries = chart.addSeries(LineSeries, {
+      color: "rgba(6, 182, 212, 0.4)",
+      lineWidth: 1,
+      lineStyle: 3,
+      title: "ST-GNN Lower CI",
+    });
 
-    const actualPoints = history.filter((p) => p.actual_volatility_later !== null);
-    if (actualPoints.length > 0) {
+    garchSeriesRef.current = garchSeries;
+    gruSeriesRef.current = gruSeries;
+    stgnnSeriesRef.current = stgnnSeries;
+    stgnnCiUpperRef.current = stgnnCiUpperSeries;
+    stgnnCiLowerRef.current = stgnnCiLowerSeries;
+
+    const garchData: { time: UTCTimestamp; value: number }[] = [];
+    const gruData: { time: UTCTimestamp; value: number }[] = [];
+    const stgnnData: { time: UTCTimestamp; value: number }[] = [];
+    const stgnnCiUpperData: { time: UTCTimestamp; value: number }[] = [];
+    const stgnnCiLowerData: { time: UTCTimestamp; value: number }[] = [];
+    const actualData: { time: UTCTimestamp; value: number }[] = [];
+
+    history.forEach((p) => {
+      const time = toChartTime(p.timestamp);
+      if (p.models.garch) garchData.push({ time, value: p.models.garch.predicted_volatility });
+      if (p.models.gru) gruData.push({ time, value: p.models.gru.predicted_volatility });
+      if (p.models.stgnn) {
+        stgnnData.push({ time, value: p.models.stgnn.predicted_volatility });
+        if (p.models.stgnn.ci_upper_bound != null) {
+          stgnnCiUpperData.push({ time, value: p.models.stgnn.ci_upper_bound });
+        }
+        if (p.models.stgnn.ci_lower_bound != null) {
+          stgnnCiLowerData.push({ time, value: p.models.stgnn.ci_lower_bound });
+        }
+      }
+
+      // @ts-expect-error fallback if actual_volatility_later is still present in payload
+      const actual = p.actual_volatility_later;
+      if (actual !== undefined && actual !== null) {
+        actualData.push({ time, value: actual });
+      }
+    });
+
+    garchSeries.setData(garchData);
+    gruSeries.setData(gruData);
+    stgnnSeries.setData(stgnnData);
+    stgnnCiUpperSeries.setData(stgnnCiUpperData);
+    stgnnCiLowerSeries.setData(stgnnCiLowerData);
+
+    if (actualData.length > 0) {
       const actualSeries = chart.addSeries(LineSeries, {
-        color: ACTUAL_COLOR,
+        color: COLORS.actual,
         lineWidth: 2,
         lineStyle: 2,
         title: "Actual",
       });
       actualSeriesRef.current = actualSeries;
-      actualSeries.setData(
-        actualPoints.map((p) => ({
-          time: toChartTime(p.timestamp),
-          value: p.actual_volatility_later as number,
-        })),
-      );
+      actualSeries.setData(actualData);
     }
 
     chart.timeScale().fitContent();
@@ -90,6 +139,11 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Pred
       chart.remove();
       chartRef.current = null;
       predictedSeriesRef.current = null;
+      garchSeriesRef.current = null;
+      gruSeriesRef.current = null;
+      stgnnSeriesRef.current = null;
+      stgnnCiUpperRef.current = null;
+      stgnnCiLowerRef.current = null;
       actualSeriesRef.current = null;
     };
   }, [history]);
@@ -105,13 +159,29 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Pred
       if (message.type !== "new_prediction") return;
       if (message.cryptocurrency_pair !== pair) return;
 
-      const stgnn = message.models?.stgnn;
-      if (!stgnn) return;
+      const time = toChartTime(message.timestamp);
+      
+      if (message.models.garch) {
+        garchSeriesRef.current?.update({ time, value: message.models.garch.predicted_volatility });
+      }
+      if (message.models.gru) {
+        gruSeriesRef.current?.update({ time, value: message.models.gru.predicted_volatility });
+      }
+      if (message.models.stgnn) {
+        stgnnSeriesRef.current?.update({ time, value: message.models.stgnn.predicted_volatility });
+        if (message.models.stgnn.ci_upper_bound != null) {
+          stgnnCiUpperRef.current?.update({ time, value: message.models.stgnn.ci_upper_bound });
+        }
+        if (message.models.stgnn.ci_lower_bound != null) {
+          stgnnCiLowerRef.current?.update({ time, value: message.models.stgnn.ci_lower_bound });
+        }
+      }
 
-      predictedSeriesRef.current?.update({
-        time: toChartTime(message.timestamp),
-        value: stgnn.predicted_volatility,
-      });
+      // @ts-expect-error fallback
+      const actual = message.actual_volatility_later;
+      if (actual !== undefined && actual !== null) {
+        actualSeriesRef.current?.update({ time, value: actual });
+      }
     });
 
     client.connect();
@@ -122,5 +192,27 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Pred
     };
   }, [pair]);
 
-  return <div ref={containerRef} className={STYLES.container} />;
+  return (
+    <div className={STYLES.wrapper}>
+      <div className={STYLES.legend}>
+        <div className={STYLES.legendItem}>
+          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: COLORS.stgnn }} />
+          <span className="text-zinc-700 dark:text-zinc-300">ST-GNN</span>
+        </div>
+        <div className={STYLES.legendItem}>
+          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: COLORS.garch }} />
+          <span className="text-zinc-700 dark:text-zinc-300">GARCH</span>
+        </div>
+        <div className={STYLES.legendItem}>
+          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: COLORS.gru }} />
+          <span className="text-zinc-700 dark:text-zinc-300">GRU</span>
+        </div>
+        <div className={STYLES.legendItem}>
+          <span className="h-2 w-2 border-b-2 border-dashed" style={{ borderColor: COLORS.actual }} />
+          <span className="text-zinc-700 dark:text-zinc-300">Actual</span>
+        </div>
+      </div>
+      <div ref={containerRef} className={STYLES.container} />
+    </div>
+  );
 }

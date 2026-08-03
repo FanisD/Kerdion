@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ErrorState } from "@/components/ErrorState";
 import { VolatilityChart } from "@/components/VolatilityChart";
 import { PredictionTable } from "@/components/PredictionTable";
-import { ModelMetadata } from "@/components/ModelMetadata";
+import { ModelArenaCard } from "@/components/ModelArenaCard";
 import { getPredictionsForPair } from "@/lib/api";
 
 const STYLES = {
@@ -52,6 +52,19 @@ export default async function PairDetailPage({
     notFound();
   }
 
+  let latest = null;
+  let bestModel = "";
+  if (result.ok && result.data.length > 0) {
+    latest = result.data[result.data.length - 1];
+    let minQlike = Infinity;
+    for (const [name, metrics] of Object.entries(latest.models)) {
+      if (metrics.qlike_score != null && metrics.qlike_score < minQlike) {
+        minQlike = metrics.qlike_score;
+        bestModel = name;
+      }
+    }
+  }
+
   return (
     <div className={STYLES.container}>
       <Link href="/" className={STYLES.back}>
@@ -83,9 +96,19 @@ export default async function PairDetailPage({
         <ErrorState message={result.error} />
       ) : (
         <>
-          <div className={STYLES.section}>
-            <h2 className={STYLES.sectionTitle}>Model metadata</h2>
-            <ModelMetadata history={result.data} />
+          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {latest ? (
+              Object.entries(latest.models).map(([modelName, metrics]) => (
+                <ModelArenaCard
+                  key={modelName}
+                  modelName={modelName}
+                  metrics={metrics}
+                  isBest={modelName === bestModel}
+                />
+              ))
+            ) : (
+              <p className="text-sm text-zinc-500">No predictions available.</p>
+            )}
           </div>
 
           <div className={STYLES.section}>

@@ -15,6 +15,9 @@ export type ModelRosterMetrics = {
   qlike_score?: number | null;
   ci_lower_bound?: number | null;
   ci_upper_bound?: number | null;
+  dm_statistic?: number | null;
+  dm_p_value?: number | null;
+  dm_significance_vs_naive?: string | null;
 };
 
 export type RosterResponse = {

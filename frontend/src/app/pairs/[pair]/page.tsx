@@ -4,6 +4,7 @@ import { ErrorState } from "@/components/ErrorState";
 import { VolatilityChart } from "@/components/VolatilityChart";
 import { PredictionTable } from "@/components/PredictionTable";
 import { ModelArenaCard } from "@/components/ModelArenaCard";
+import { DMTestBadge } from "@/components/DMTestBadge";
 import { getPredictionsForPair } from "@/lib/api";
 
 const STYLES = {
@@ -72,11 +73,16 @@ export default async function PairDetailPage({
       </Link>
 
       <div className={STYLES.headerRow}>
-        <div>
-          <h1 className={STYLES.heading}>{pair}</h1>
-          <p className={STYLES.subheading}>
-            Predicted vs. actual volatility
-          </p>
+        <div className="flex flex-col gap-3">
+          <div>
+            <h1 className={STYLES.heading}>{pair}</h1>
+            <p className={STYLES.subheading}>
+              Predicted vs. actual volatility
+            </p>
+          </div>
+          {latest?.models?.stgnn && (
+            <DMTestBadge metrics={latest.models.stgnn} />
+          )}
         </div>
 
         <div className={STYLES.rangeGroup}>

@@ -5,7 +5,7 @@ import {
   getAllPredictions,
   getLatestPrediction,
   groupPredictionsByPair,
-  type Prediction,
+  type RosterResponse,
 } from "@/lib/api";
 
 const STYLES = {
@@ -35,7 +35,7 @@ export default async function OverviewPage() {
   );
 }
 
-function PairGrid({ predictions }: { predictions: Prediction[] }) {
+function PairGrid({ predictions }: { predictions: RosterResponse[] }) {
   const byPair = groupPredictionsByPair(predictions);
   const pairs = Object.keys(byPair).sort();
 

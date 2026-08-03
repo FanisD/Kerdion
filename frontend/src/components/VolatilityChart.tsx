@@ -13,10 +13,10 @@ import { LivePredictionsClient, type LiveMessage } from "@/lib/wsClient";
 import type { RosterResponse } from "@/lib/api";
 
 const STYLES = {
-  wrapper: "relative w-full",
+  wrapper: "relative w-full rounded-xl overflow-hidden",
   container: "h-64 w-full",
-  legend: "absolute top-2 left-2 z-10 flex flex-col gap-1 rounded bg-white/80 p-2 text-xs backdrop-blur dark:bg-zinc-950/80 shadow-sm border border-black/5 dark:border-white/5",
-  legendItem: "flex items-center gap-2",
+  legend: "absolute top-4 left-4 z-10 flex flex-col gap-2 rounded-lg bg-[var(--bg-surface)]/80 p-3 text-xs backdrop-blur-md shadow-lg border border-[var(--border-subtle)]",
+  legendItem: "flex items-center gap-2 font-medium tracking-wide text-[var(--text-primary)]",
 };
 
 const COLORS = {
@@ -49,11 +49,11 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Rost
       height: container.clientHeight,
       layout: {
         background: { type: ColorType.Solid, color: "transparent" },
-        textColor: "#71717a",
+        textColor: "#94a3b8",
       },
       grid: {
         vertLines: { visible: false },
-        horzLines: { color: "rgba(0, 0, 0, 0.06)" },
+        horzLines: { color: "rgba(255, 255, 255, 0.05)" },
       },
       timeScale: { timeVisible: true },
     });
@@ -196,20 +196,20 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Rost
     <div className={STYLES.wrapper}>
       <div className={STYLES.legend}>
         <div className={STYLES.legendItem}>
-          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: COLORS.stgnn }} />
-          <span className="text-zinc-700 dark:text-zinc-300">ST-GNN</span>
+          <span className="h-2 w-2 rounded-full shadow-[0_0_8px_var(--accent-primary)]" style={{ backgroundColor: COLORS.stgnn }} />
+          <span>ST-GNN</span>
         </div>
         <div className={STYLES.legendItem}>
-          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: COLORS.garch }} />
-          <span className="text-zinc-700 dark:text-zinc-300">GARCH</span>
+          <span className="h-2 w-2 rounded-full shadow-[0_0_8px_var(--accent-garch)]" style={{ backgroundColor: COLORS.garch }} />
+          <span>GARCH</span>
         </div>
         <div className={STYLES.legendItem}>
-          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: COLORS.gru }} />
-          <span className="text-zinc-700 dark:text-zinc-300">GRU</span>
+          <span className="h-2 w-2 rounded-full shadow-[0_0_8px_var(--accent-gru)]" style={{ backgroundColor: COLORS.gru }} />
+          <span>GRU</span>
         </div>
         <div className={STYLES.legendItem}>
-          <span className="h-2 w-2 border-b-2 border-dashed" style={{ borderColor: COLORS.actual }} />
-          <span className="text-zinc-700 dark:text-zinc-300">Actual</span>
+          <span className="h-2 w-2 border-b-2 border-dashed opacity-50" style={{ borderColor: COLORS.actual }} />
+          <span className="text-[var(--text-secondary)]">Actual</span>
         </div>
       </div>
       <div ref={containerRef} className={STYLES.container} />

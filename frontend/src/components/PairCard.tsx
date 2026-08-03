@@ -2,12 +2,12 @@ import Link from "next/link";
 import type { RosterResponse } from "@/lib/api";
 
 const STYLES = {
-  card: "flex flex-col gap-2 rounded-2xl border border-black/10 bg-white p-5 transition-colors hover:border-black/20 dark:border-white/10 dark:bg-zinc-950 dark:hover:border-white/20",
-  pair: "text-lg font-semibold text-black dark:text-zinc-50",
-  model: "text-xs font-medium uppercase tracking-wide text-zinc-600 dark:text-zinc-400",
-  volatility: "text-2xl font-semibold tabular-nums text-black dark:text-zinc-50",
-  label: "text-xs text-zinc-600 dark:text-zinc-400",
-  sparkline: "text-cyan-600 dark:text-cyan-400",
+  card: "group flex flex-col gap-2 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]/60 p-5 shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-[var(--border-strong)] hover:shadow-xl hover:shadow-[var(--accent-primary)]/10",
+  pair: "text-lg font-bold tracking-wider text-[var(--text-primary)] transition-colors group-hover:text-[var(--accent-primary)]",
+  model: "text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]",
+  volatility: "text-2xl font-bold tabular-nums tracking-tight text-[var(--text-primary)]",
+  label: "text-[10px] font-semibold uppercase tracking-wider text-[var(--text-secondary)]",
+  sparkline: "text-[var(--accent-primary)] transition-all duration-300 drop-shadow-[0_0_8px_var(--accent-primary)] opacity-80 group-hover:opacity-100",
 };
 
 const SPARKLINE_WIDTH = 200;

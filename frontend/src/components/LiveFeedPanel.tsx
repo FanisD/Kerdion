@@ -8,36 +8,34 @@ import type { RosterResponse } from "@/lib/api";
 type FeedItem = RosterResponse & { _id: string };
 
 const STYLES = {
-  section: "rounded-2xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-zinc-950",
-  header: "mb-3 flex items-center justify-between",
-  title: "text-sm font-medium text-black dark:text-zinc-50",
+  section: "relative rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]/60 p-5 shadow-lg backdrop-blur-xl transition-all duration-300 hover:border-[var(--border-strong)] hover:shadow-xl hover:shadow-[var(--accent-primary)]/5",
+  header: "mb-4 flex items-center justify-between",
+  title: "text-sm font-bold uppercase tracking-widest text-[var(--text-primary)]",
   status: (status: ConnectionStatus) =>
     [
-      "flex items-center gap-2 text-xs font-medium",
-      status === "connected" && "text-emerald-600 dark:text-emerald-400",
-      status === "reconnecting" && "text-amber-600 dark:text-amber-400",
-      status === "auth-failed" && "text-red-600 dark:text-red-400",
-      status === "disconnected" && "text-zinc-500 dark:text-zinc-500",
+      "flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider",
+      status === "connected" && "text-emerald-400 drop-shadow-[0_0_5px_rgba(52,211,153,0.5)]",
+      status === "reconnecting" && "text-amber-400",
+      status === "auth-failed" && "text-red-400",
+      status === "disconnected" && "text-zinc-500",
     ]
       .filter(Boolean)
       .join(" "),
   dot: (status: ConnectionStatus) =>
     [
       "h-2 w-2 rounded-full",
-      status === "connected" && "bg-emerald-500",
-      status === "reconnecting" && "bg-amber-500",
-      status === "auth-failed" && "bg-red-500",
-      status === "disconnected" && "bg-zinc-400 dark:bg-zinc-600",
+      status === "connected" && "bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]",
+      status === "reconnecting" && "bg-amber-400",
+      status === "auth-failed" && "bg-red-400",
+      status === "disconnected" && "bg-zinc-600",
     ]
       .filter(Boolean)
       .join(" "),
-  empty: "text-sm text-zinc-600 dark:text-zinc-400",
-  list: "flex flex-col divide-y divide-black/10 dark:divide-white/10",
-  row: "flex items-center justify-between gap-4 py-2 text-sm",
-  pair: "font-medium text-black hover:underline dark:text-zinc-50",
-  model: "text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-500",
-  volatility: "tabular-nums text-black dark:text-zinc-50",
-  authFailed: "text-sm text-red-600 dark:text-red-400",
+  empty: "text-sm text-[var(--text-secondary)]",
+  list: "flex flex-col divide-y divide-[var(--border-subtle)]",
+  row: "flex items-center justify-between gap-4 py-3 text-sm transition-colors hover:bg-[var(--bg-surface-hover)] -mx-2 px-2 rounded-lg",
+  pair: "font-semibold text-[var(--text-primary)] hover:text-[var(--accent-primary)] transition-colors",
+  authFailed: "text-sm text-red-400",
 };
 
 const STATUS_LABELS: Record<ConnectionStatus, string> = {

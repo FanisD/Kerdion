@@ -6,13 +6,13 @@ import { LivePredictionsClient, type ConnectionStatus as WsConnectionStatus } fr
 export type ConnectionStatus = "connected" | "reconnecting" | "disconnected";
 
 const STYLES = {
-  badge: "flex items-center gap-2 text-xs font-medium text-zinc-600 dark:text-zinc-400",
+  badge: "flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] shadow-sm backdrop-blur-md transition-all hover:border-[var(--border-strong)]",
   dot: (status: ConnectionStatus) =>
     [
       "h-2 w-2 rounded-full",
-      status === "connected" && "bg-emerald-500",
-      status === "reconnecting" && "bg-amber-500",
-      status === "disconnected" && "bg-zinc-400 dark:bg-zinc-600",
+      status === "connected" && "bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]",
+      status === "reconnecting" && "bg-amber-400",
+      status === "disconnected" && "bg-zinc-500",
     ]
       .filter(Boolean)
       .join(" "),

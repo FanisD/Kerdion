@@ -7,25 +7,25 @@ const MODEL_COLORS: Record<string, string> = {
 };
 
 const STYLES = {
-  card: "relative flex flex-col gap-3 rounded-2xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-zinc-950",
+  card: "relative flex flex-col gap-3 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]/60 p-5 shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-[var(--border-strong)] hover:shadow-xl hover:shadow-[var(--accent-primary)]/10",
   header: "flex items-center justify-between",
   titleWrap: "flex items-center gap-2",
-  dot: (modelName: string) => `h-2.5 w-2.5 rounded-full ${MODEL_COLORS[modelName.toLowerCase()] || "bg-zinc-500"}`,
-  title: "text-sm font-medium uppercase tracking-wider text-black dark:text-zinc-50",
-  crown: "text-lg",
+  dot: (modelName: string) => `h-2.5 w-2.5 rounded-full shadow-sm ${MODEL_COLORS[modelName.toLowerCase()] || "bg-zinc-500"}`,
+  title: "text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]",
+  crown: "text-lg animate-pulse drop-shadow-md",
   valueWrap: "flex flex-col gap-1",
-  valueLabel: "text-xs text-zinc-500 dark:text-zinc-400",
-  value: "text-3xl font-bold tabular-nums text-black dark:text-zinc-50",
-  footer: "mt-2 flex flex-col gap-2 border-t border-black/5 pt-3 dark:border-white/5",
+  valueLabel: "text-[10px] font-semibold uppercase tracking-wider text-[var(--text-secondary)]",
+  value: "text-3xl font-bold tabular-nums tracking-tight text-[var(--text-primary)]",
+  footer: "mt-2 flex flex-col gap-2 border-t border-[var(--border-subtle)] pt-3",
   row: "flex items-center justify-between text-xs",
-  rowLabel: "text-zinc-600 dark:text-zinc-400",
+  rowLabel: "font-medium text-[var(--text-secondary)]",
   qlikeBadge: (isBest: boolean) =>
-    `rounded-md px-2 py-1 font-medium tabular-nums ${
+    `rounded-md px-2 py-1 font-bold tabular-nums shadow-sm transition-colors ${
       isBest
-        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
-        : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+        ? "bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30"
+        : "bg-[var(--bg-surface-hover)] text-[var(--text-secondary)] border border-[var(--border-subtle)]"
     }`,
-  ciValue: "font-medium tabular-nums text-zinc-700 dark:text-zinc-300",
+  ciValue: "font-mono font-medium tabular-nums text-[var(--text-primary)]/80",
 };
 
 export function ModelArenaCard({

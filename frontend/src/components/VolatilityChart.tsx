@@ -103,19 +103,15 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Pred
 
     const unsubscribe = client.onMessage((message: LiveMessage) => {
       if (message.type !== "new_prediction") return;
-      if (message.data.cryptocurrency_pair !== pair) return;
+      if (message.cryptocurrency_pair !== pair) return;
+
+      const stgnn = message.models?.stgnn;
+      if (!stgnn) return;
 
       predictedSeriesRef.current?.update({
-        time: toChartTime(message.data.timestamp),
-        value: message.data.predicted_volatility,
+        time: toChartTime(message.timestamp),
+        value: stgnn.predicted_volatility,
       });
-
-      if (message.data.actual_volatility_later !== null) {
-        actualSeriesRef.current?.update({
-          time: toChartTime(message.data.timestamp),
-          value: message.data.actual_volatility_later,
-        });
-      }
     });
 
     client.connect();

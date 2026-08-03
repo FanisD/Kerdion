@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { LivePredictionsClient, type ConnectionStatus, type LiveMessage } from "@/lib/wsClient";
-import type { Prediction } from "@/lib/api";
+import type { RosterResponse } from "@/lib/api";
+
+type FeedItem = RosterResponse & { _id: string };
 
 const STYLES = {
   section: "rounded-2xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-zinc-950",
@@ -49,7 +51,7 @@ const MAX_FEED_ITEMS = 20;
 
 export function LiveFeedPanel() {
   const [status, setStatus] = useState<ConnectionStatus>("disconnected");
-  const [feed, setFeed] = useState<Prediction[]>([]);
+  const [feed, setFeed] = useState<FeedItem[]>([]);
   const clientRef = useRef<LivePredictionsClient | null>(null);
 
   useEffect(() => {
@@ -60,19 +62,12 @@ export function LiveFeedPanel() {
     const unsubscribeMessage = client.onMessage((message: LiveMessage) => {
       if (message.type !== "new_prediction") return;
       
-      const stgnn = message.models?.stgnn;
-      if (!stgnn) return;
-
-      const fakePrediction: Prediction = {
-        id: Date.now() + Math.random(),
-        timestamp: message.timestamp,
-        cryptocurrency_pair: message.cryptocurrency_pair,
-        model_used: "STGNN",
-        predicted_volatility: stgnn.predicted_volatility,
-        actual_volatility_later: null,
+      const newItem: FeedItem = {
+        ...message,
+        _id: `${message.cryptocurrency_pair}-${message.timestamp}-${Math.random()}`,
       };
 
-      setFeed((prev) => [fakePrediction, ...prev].slice(0, MAX_FEED_ITEMS));
+      setFeed((prev) => [newItem, ...prev].slice(0, MAX_FEED_ITEMS));
     });
 
     client.connect();
@@ -100,17 +95,50 @@ export function LiveFeedPanel() {
         <p className={STYLES.empty}>Waiting for live predictions…</p>
       ) : (
         <div className={STYLES.list}>
-          {feed.map((prediction) => (
-            <div key={prediction.id} className={STYLES.row}>
-              <Link href={`/pairs/${prediction.cryptocurrency_pair}`} className={STYLES.pair}>
-                {prediction.cryptocurrency_pair}
-              </Link>
-              <span className={STYLES.model}>{prediction.model_used}</span>
-              <span className={STYLES.volatility}>
-                {prediction.predicted_volatility.toFixed(4)}
-              </span>
-            </div>
-          ))}
+          {feed.map((item) => {
+            let bestModel = "";
+            let minQlike = Infinity;
+            for (const [name, metrics] of Object.entries(item.models)) {
+              if (metrics.qlike_score != null && metrics.qlike_score < minQlike) {
+                minQlike = metrics.qlike_score;
+                bestModel = name;
+              }
+            }
+
+            return (
+              <div key={item._id} className={STYLES.row}>
+                <Link href={`/pairs/${item.cryptocurrency_pair}`} className={STYLES.pair}>
+                  {item.cryptocurrency_pair}
+                </Link>
+                <div className="flex items-center gap-2 text-xs">
+                  {Object.entries(item.models).map(([name, metrics], i, arr) => {
+                    const isBest = name === bestModel;
+                    return (
+                      <span key={name} className="flex items-center gap-1">
+                        <span
+                          className={`font-medium uppercase ${
+                            isBest ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-500"
+                          }`}
+                        >
+                          {name}:
+                        </span>
+                        <span
+                          className={`tabular-nums ${
+                            isBest ? "font-semibold text-black dark:text-white" : "text-zinc-700 dark:text-zinc-300"
+                          }`}
+                        >
+                          {metrics.predicted_volatility.toFixed(4)}
+                        </span>
+                        {i < arr.length - 1 && (
+                          <span className="mx-1 text-zinc-300 dark:text-zinc-700">|</span>
+                        )}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

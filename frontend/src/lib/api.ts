@@ -10,6 +10,19 @@ export type Prediction = {
   actual_volatility_later: number | null;
 };
 
+export type ModelRosterMetrics = {
+  predicted_volatility: number;
+  qlike_score?: number | null;
+  ci_lower_bound?: number | null;
+  ci_upper_bound?: number | null;
+};
+
+export type RosterResponse = {
+  timestamp: string;
+  cryptocurrency_pair: string;
+  models: Record<string, ModelRosterMetrics>;
+};
+
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: string };
 
 async function fetchFromApi(path: string): Promise<Response | null> {

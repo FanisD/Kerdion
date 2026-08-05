@@ -138,7 +138,6 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Rost
       window.removeEventListener("resize", handleResize);
       chart.remove();
       chartRef.current = null;
-      predictedSeriesRef.current = null;
       garchSeriesRef.current = null;
       gruSeriesRef.current = null;
       stgnnSeriesRef.current = null;

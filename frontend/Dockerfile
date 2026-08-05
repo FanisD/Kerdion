@@ -20,6 +20,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Ensure public directory exists (even if the project has no public/ folder)
+RUN mkdir -p /app/public
+
 RUN npm run build
 
 # ==========================================

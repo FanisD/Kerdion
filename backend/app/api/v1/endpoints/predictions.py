@@ -42,6 +42,8 @@ async def get_market_topology(db: AsyncSession = Depends(get_db)):
             raise HTTPException(status_code=404, detail="Topology matrix not found in cache. ML Engine may still be booting.")
             
         return json.loads(cached_matrix)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

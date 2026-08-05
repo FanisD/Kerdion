@@ -53,8 +53,11 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 # Copy the rest of the application files into the container
 COPY . .
 
+# Make the entrypoint script executable
+RUN chmod +x /app/entrypoint.sh
+
 # Expose FastAPI's default port
 EXPOSE 8000
 
-# Default command to run the ASGI application server
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run migrations automatically, then start the API server
+CMD ["/app/entrypoint.sh"]

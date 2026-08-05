@@ -1,2 +1,2 @@
 # kerdion
-Online platform for cryptocurrency ai predictions
+Kerdion is a production-grade, real-time Machine Learning platform for forecasting cryptocurrency market volatility. Originally developed as a B.Sc. thesis at Harokopio University, the project compares traditional econometric models against modern deep learning and graph neural network architectures. The platform culminates in an Adaptive Spatio-Temporal Graph Neural Network (ST-GNN) that learns market topology end-to-end.

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { RosterResponse } from "@/lib/api";
+import { AnimatedNumber } from "./AnimatedNumber";
 
 const STYLES = {
   card: (isPulsing: boolean) => `group relative flex flex-col gap-3 rounded-2xl border bg-[var(--bg-surface)]/60 p-5 shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
@@ -84,7 +85,7 @@ export function PairCard({
       <div className="flex flex-col">
         <span className={STYLES.volatility}>
           {latest?.models?.stgnn
-            ? latest.models.stgnn.predicted_volatility.toFixed(4)
+            ? <AnimatedNumber value={latest.models.stgnn.predicted_volatility} />
             : "—"}
         </span>
         <span className={STYLES.label}>ST-GNN Volatility</span>

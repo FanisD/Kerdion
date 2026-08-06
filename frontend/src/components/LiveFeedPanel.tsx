@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { LivePredictionsClient, type ConnectionStatus, type LiveMessage } from "@/lib/wsClient";
 import type { RosterResponse } from "@/lib/api";
+import { AnimatedNumber } from "./AnimatedNumber";
 
 type FeedItem = RosterResponse & { _id: string };
 
@@ -125,7 +126,7 @@ export function LiveFeedPanel() {
                             isBest ? "font-semibold text-black dark:text-white" : "text-zinc-700 dark:text-zinc-300"
                           }`}
                         >
-                          {metrics.predicted_volatility.toFixed(4)}
+                          <AnimatedNumber value={metrics.predicted_volatility} />
                         </span>
                         {i < arr.length - 1 && (
                           <span className="mx-1 text-zinc-300 dark:text-zinc-700">|</span>

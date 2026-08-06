@@ -13,17 +13,17 @@ import { LivePredictionsClient, type LiveMessage } from "@/lib/wsClient";
 import type { RosterResponse } from "@/lib/api";
 
 const STYLES = {
-  wrapper: "relative w-full rounded-xl overflow-hidden",
-  container: "h-64 w-full",
+  wrapper: "relative w-full rounded-xl overflow-hidden glass-panel",
+  container: "h-96 w-full",
   legend: "absolute top-4 left-4 z-10 flex flex-col gap-2 rounded-lg bg-[var(--bg-surface)]/80 p-3 text-xs backdrop-blur-md shadow-lg border border-[var(--border-subtle)]",
   legendItem: "flex items-center gap-2 font-medium tracking-wide text-[var(--text-primary)]",
 };
 
 const COLORS = {
-  garch: "#f97316",
-  gru: "#a855f7",
-  stgnn: "#06b6d4",
-  actual: "#a1a1aa",
+  garch: "#FF7B00",
+  gru: "#B528FF",
+  stgnn: "#00E5FF",
+  actual: "#FFFFFF",
 };
 
 function toChartTime(timestamp: string): UTCTimestamp {
@@ -36,6 +36,7 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Rost
   const garchSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
   const gruSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
   const stgnnSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const stgnnGlowSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
   const stgnnCiUpperRef = useRef<ISeriesApi<"Line"> | null>(null);
   const stgnnCiLowerRef = useRef<ISeriesApi<"Line"> | null>(null);
   const actualSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
@@ -59,9 +60,10 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Rost
     });
     chartRef.current = chart;
 
-    const garchSeries = chart.addSeries(LineSeries, { color: COLORS.garch, lineWidth: 2, title: "GARCH" });
-    const gruSeries = chart.addSeries(LineSeries, { color: COLORS.gru, lineWidth: 2, title: "GRU" });
-    const stgnnSeries = chart.addSeries(LineSeries, { color: COLORS.stgnn, lineWidth: 2, title: "ST-GNN" });
+    const garchSeries = chart.addSeries(LineSeries, { color: COLORS.garch, lineWidth: 1, lineStyle: 2, title: "GARCH" });
+    const gruSeries = chart.addSeries(LineSeries, { color: COLORS.gru, lineWidth: 1, lineStyle: 2, title: "GRU" });
+    const stgnnGlowSeries = chart.addSeries(LineSeries, { color: "rgba(0, 229, 255, 0.2)", lineWidth: 8, title: "", crosshairMarkerVisible: false, lastValueVisible: false });
+    const stgnnSeries = chart.addSeries(LineSeries, { color: COLORS.stgnn, lineWidth: 3, title: "ST-GNN" });
     
     const stgnnCiUpperSeries = chart.addSeries(LineSeries, {
       color: "rgba(6, 182, 212, 0.4)",
@@ -79,6 +81,7 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Rost
     garchSeriesRef.current = garchSeries;
     gruSeriesRef.current = gruSeries;
     stgnnSeriesRef.current = stgnnSeries;
+    stgnnGlowSeriesRef.current = stgnnGlowSeries;
     stgnnCiUpperRef.current = stgnnCiUpperSeries;
     stgnnCiLowerRef.current = stgnnCiLowerSeries;
 
@@ -113,14 +116,15 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Rost
     garchSeries.setData(garchData);
     gruSeries.setData(gruData);
     stgnnSeries.setData(stgnnData);
+    stgnnGlowSeries.setData(stgnnData);
     stgnnCiUpperSeries.setData(stgnnCiUpperData);
     stgnnCiLowerSeries.setData(stgnnCiLowerData);
 
     if (actualData.length > 0) {
       const actualSeries = chart.addSeries(LineSeries, {
         color: COLORS.actual,
-        lineWidth: 2,
-        lineStyle: 2,
+        lineWidth: 3,
+        lineStyle: 0,
         title: "Actual",
       });
       actualSeriesRef.current = actualSeries;
@@ -141,6 +145,7 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Rost
       garchSeriesRef.current = null;
       gruSeriesRef.current = null;
       stgnnSeriesRef.current = null;
+      stgnnGlowSeriesRef.current = null;
       stgnnCiUpperRef.current = null;
       stgnnCiLowerRef.current = null;
       actualSeriesRef.current = null;
@@ -168,6 +173,7 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Rost
       }
       if (message.models.stgnn) {
         stgnnSeriesRef.current?.update({ time, value: message.models.stgnn.predicted_volatility });
+        stgnnGlowSeriesRef.current?.update({ time, value: message.models.stgnn.predicted_volatility });
         if (message.models.stgnn.ci_upper_bound != null) {
           stgnnCiUpperRef.current?.update({ time, value: message.models.stgnn.ci_upper_bound });
         }
@@ -207,8 +213,8 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Rost
           <span>GRU</span>
         </div>
         <div className={STYLES.legendItem}>
-          <span className="h-2 w-2 border-b-2 border-dashed opacity-50" style={{ borderColor: COLORS.actual }} />
-          <span className="text-[var(--text-secondary)]">Actual</span>
+          <span className="h-2 w-2 border-b-2" style={{ borderColor: COLORS.actual }} />
+          <span className="text-[var(--text-secondary)]">Actual (Truth)</span>
         </div>
       </div>
       <div ref={containerRef} className={STYLES.container} />

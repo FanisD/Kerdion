@@ -1,19 +1,12 @@
 import { ErrorState } from "@/components/ErrorState";
 import { LiveFeedPanel } from "@/components/LiveFeedPanel";
-import { PairCard } from "@/components/PairCard";
-import {
-  getAllPredictions,
-  getLatestPrediction,
-  groupPredictionsByPair,
-  type RosterResponse,
-} from "@/lib/api";
+import { LiveBentoGrid } from "@/components/LiveBentoGrid";
+import { getAllPredictions } from "@/lib/api";
 
 const STYLES = {
-  container: "mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-10",
-  heading: "text-2xl font-semibold tracking-tight text-black dark:text-zinc-50",
-  subheading: "text-sm text-zinc-600 dark:text-zinc-400",
-  grid: "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3",
-  empty: "text-sm text-zinc-600 dark:text-zinc-400",
+  container: "mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-6 py-10",
+  heading: "text-3xl font-bold tracking-tight text-[var(--text-primary)]",
+  subheading: "text-sm text-[var(--text-secondary)]",
 };
 
 export default async function OverviewPage() {
@@ -30,29 +23,7 @@ export default async function OverviewPage() {
 
       <LiveFeedPanel />
 
-      {!result.ok ? <ErrorState message={result.error} /> : <PairGrid predictions={result.data} />}
-    </div>
-  );
-}
-
-function PairGrid({ predictions }: { predictions: RosterResponse[] }) {
-  const byPair = groupPredictionsByPair(predictions);
-  const pairs = Object.keys(byPair).sort();
-
-  if (pairs.length === 0) {
-    return <p className={STYLES.empty}>No tracked pairs yet.</p>;
-  }
-
-  return (
-    <div className={STYLES.grid}>
-      {pairs.map((pair) => (
-        <PairCard
-          key={pair}
-          pair={pair}
-          latest={getLatestPrediction(byPair[pair])}
-          history={byPair[pair]}
-        />
-      ))}
+      {!result.ok ? <ErrorState message={result.error} /> : <LiveBentoGrid initialPredictions={result.data} />}
     </div>
   );
 }

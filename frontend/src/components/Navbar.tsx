@@ -10,7 +10,7 @@ export function Navbar({ isAuthenticated }: { isAuthenticated: boolean }) {
 
   return (
     <nav className="sticky top-0 z-50 flex items-center justify-between border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]/70 px-6 py-4 backdrop-blur-md">
-      <Link href="/" className="text-sm font-bold uppercase tracking-widest text-[var(--accent-primary)]">
+      <Link href="/" className="text-sm font-bold uppercase tracking-widest neon-text-primary">
         Kerdion
       </Link>
       

@@ -1,10 +1,18 @@
 import Link from "next/link";
 import type { RosterResponse } from "@/lib/api";
+import { AnimatedNumber } from "./AnimatedNumber";
 
 const STYLES = {
-  card: "group flex flex-col gap-2 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]/60 p-5 shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-[var(--border-strong)] hover:shadow-xl hover:shadow-[var(--accent-primary)]/10",
+  card: (isPulsing: boolean) => `group relative flex flex-col gap-3 rounded-2xl border bg-[var(--bg-surface)]/60 p-5 shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
+    isPulsing 
+      ? "border-[var(--accent-primary)] shadow-[0_0_20px_rgba(0,229,255,0.4)] scale-[1.02] bg-[var(--bg-surface-hover)]" 
+      : "border-[var(--border-subtle)] hover:border-[var(--border-strong)] hover:shadow-[var(--accent-primary)]/10"
+  }`,
+  header: "flex items-center justify-between",
   pair: "text-lg font-bold tracking-wider text-[var(--text-primary)] transition-colors group-hover:text-[var(--accent-primary)]",
-  model: "text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]",
+  trendUp: "text-emerald-400 font-bold",
+  trendDown: "text-rose-400 font-bold",
+  trendFlat: "text-[var(--text-secondary)] font-bold",
   volatility: "text-2xl font-bold tabular-nums tracking-tight text-[var(--text-primary)]",
   label: "text-[10px] font-semibold uppercase tracking-wider text-[var(--text-secondary)]",
   sparkline: "text-[var(--accent-primary)] transition-all duration-300 drop-shadow-[0_0_8px_var(--accent-primary)] opacity-80 group-hover:opacity-100",
@@ -53,39 +61,39 @@ export function PairCard({
   pair,
   latest,
   history,
+  isPulsing = false,
 }: {
   pair: string;
   latest: RosterResponse | undefined;
   history: RosterResponse[];
+  isPulsing?: boolean;
 }) {
-  const modelKeys = latest?.models ? Object.keys(latest.models) : [];
-  const modelCount = modelKeys.length;
-
-  const summaryParts = modelKeys.map((k) => {
-    const val = latest!.models[k].predicted_volatility.toFixed(2);
-    return `${k.toUpperCase()}: ${val}`;
-  });
-
-  const summaryString = summaryParts.join(" | ") || "—";
+  const prev = history.length >= 2 ? history[history.length - 2] : undefined;
+  const currentVol = latest?.models?.stgnn?.predicted_volatility ?? 0;
+  const prevVol = prev?.models?.stgnn?.predicted_volatility ?? currentVol;
+  const trend = currentVol > prevVol ? "up" : currentVol < prevVol ? "down" : "flat";
 
   return (
-    <Link href={`/pairs/${pair}`} className={STYLES.card}>
-      <div className="flex items-center justify-between">
+    <Link href={`/pairs/${pair}`} className={STYLES.card(isPulsing)}>
+      <div className={STYLES.header}>
         <span className={STYLES.pair}>{pair}</span>
-        {modelCount > 0 && (
-          <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
-            {modelCount} Models
-          </span>
-        )}
+        {trend === "up" && <span className={STYLES.trendUp}>↗</span>}
+        {trend === "down" && <span className={STYLES.trendDown}>↘</span>}
+        {trend === "flat" && <span className={STYLES.trendFlat}>→</span>}
       </div>
-      <span className={STYLES.model}>{summaryString}</span>
-      <span className={STYLES.volatility}>
-        {latest?.models?.stgnn
-          ? latest.models.stgnn.predicted_volatility.toFixed(4)
-          : "—"}
-      </span>
-      <span className={STYLES.label}>predicted volatility (ST-GNN)</span>
-      <Sparkline history={history} />
+      
+      <div className="flex flex-col">
+        <span className={STYLES.volatility}>
+          {latest?.models?.stgnn
+            ? <AnimatedNumber value={latest.models.stgnn.predicted_volatility} />
+            : "—"}
+        </span>
+        <span className={STYLES.label}>ST-GNN Volatility</span>
+      </div>
+      
+      <div className="mt-2 h-10 w-full overflow-hidden">
+        <Sparkline history={history} />
+      </div>
     </Link>
   );
 }

@@ -1,4 +1,5 @@
 import { ModelRosterMetrics } from "@/lib/api";
+import { AnimatedNumber } from "./AnimatedNumber";
 
 const MODEL_COLORS: Record<string, string> = {
   garch: "bg-orange-500",
@@ -50,7 +51,7 @@ export function ModelArenaCard({
       <div className={STYLES.valueWrap}>
         <span className={STYLES.valueLabel}>Predicted Volatility</span>
         <span className={STYLES.value}>
-          {metrics.predicted_volatility.toFixed(4)}
+          <AnimatedNumber value={metrics.predicted_volatility} />
         </span>
       </div>
 

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { PairCard } from "./PairCard";
 import { LivePredictionsClient, type LiveMessage } from "@/lib/wsClient";
 import type { RosterResponse } from "@/lib/api";
-import { groupPredictionsByPair } from "@/lib/api";
+import { groupPredictionsByPair } from "@/lib/utils";
 
 export function LiveBentoGrid({ initialPredictions }: { initialPredictions: RosterResponse[] }) {
   const [historyByPair, setHistoryByPair] = useState(() => groupPredictionsByPair(initialPredictions));

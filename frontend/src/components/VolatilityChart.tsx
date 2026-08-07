@@ -62,7 +62,7 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Rost
 
     const garchSeries = chart.addSeries(LineSeries, { color: COLORS.garch, lineWidth: 1, lineStyle: 2, title: "GARCH" });
     const gruSeries = chart.addSeries(LineSeries, { color: COLORS.gru, lineWidth: 1, lineStyle: 2, title: "GRU" });
-    const stgnnGlowSeries = chart.addSeries(LineSeries, { color: "rgba(0, 229, 255, 0.2)", lineWidth: 8, title: "", crosshairMarkerVisible: false, lastValueVisible: false });
+    const stgnnGlowSeries = chart.addSeries(LineSeries, { color: "rgba(0, 229, 255, 0.2)", lineWidth: 8 as any, title: "", crosshairMarkerVisible: false, lastValueVisible: false });
     const stgnnSeries = chart.addSeries(LineSeries, { color: COLORS.stgnn, lineWidth: 3, title: "ST-GNN" });
     
     const stgnnCiUpperSeries = chart.addSeries(LineSeries, {

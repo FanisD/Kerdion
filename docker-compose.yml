@@ -59,6 +59,21 @@ services:
     networks:
       - kerdion_network
 
+  celery_beat:
+    build: ./backend
+    container_name: kerdion_celery_beat
+    restart: always
+    command: celery -A app.worker.celery_app beat --loglevel=info
+    volumes:
+      - ./backend:/app
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - kerdion_network
+
   # ---- Frontend ----
   frontend:
     build:

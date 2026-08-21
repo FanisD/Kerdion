@@ -2,7 +2,7 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Absolute path to the .env file located in the backend package directory
-ENV_FILE_PATH = str(Path(__file__).resolve().parents[1] / ".env")
+ENV_FILE_PATH = str(Path(__file__).resolve().parents[2] / ".env")
 
 class Settings(BaseSettings):
     # Core Settings

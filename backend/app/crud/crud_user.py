@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import hash_password, verify_password
 from app.models.user import User
+from app.schemas.user import UserCreate
 
 
 async def get_user_by_email(db: AsyncSession, email: str) -> Optional[User]:
@@ -13,9 +14,15 @@ async def get_user_by_email(db: AsyncSession, email: str) -> Optional[User]:
     return result.scalars().first()
 
 
-async def create_user(db: AsyncSession, email: str, password: str) -> User:
+async def create_user(db: AsyncSession, user_in: UserCreate) -> User:
     """Insert a new user row with a hashed password."""
-    user = User(email=email, hashed_password=hash_password(password))
+    user = User(
+        email=user_in.email, 
+        hashed_password=hash_password(user_in.password),
+        first_name=user_in.first_name,
+        last_name=user_in.last_name,
+        occupation=user_in.occupation
+    )
     db.add(user)
     await db.commit()
     await db.refresh(user)

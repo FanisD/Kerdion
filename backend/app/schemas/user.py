@@ -9,10 +9,24 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+    first_name: str
+    last_name: str
+    occupation: str | None = None
+
+
+class UserUpdate(BaseModel):
+    first_name: str | None = None
+    last_name: str | None = None
+    occupation: str | None = None
+    email: EmailStr | None = None
 
 
 class UserResponse(UserBase):
     id: int
+    first_name: str
+    last_name: str
+    occupation: str | None
+    is_verified: bool
     role: UserRole
     is_active: bool
 

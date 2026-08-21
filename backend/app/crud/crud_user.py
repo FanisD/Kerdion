@@ -1,4 +1,5 @@
 from typing import Optional
+import secrets
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,13 +16,15 @@ async def get_user_by_email(db: AsyncSession, email: str) -> Optional[User]:
 
 
 async def create_user(db: AsyncSession, user_in: UserCreate) -> User:
-    """Insert a new user row with a hashed password."""
+    """Insert a new user row with a hashed password and a verification token."""
+    token = secrets.token_urlsafe(32)
     user = User(
-        email=user_in.email, 
+        email=user_in.email,
         hashed_password=hash_password(user_in.password),
         first_name=user_in.first_name,
         last_name=user_in.last_name,
-        occupation=user_in.occupation
+        occupation=user_in.occupation,
+        verification_token=token,
     )
     db.add(user)
     await db.commit()

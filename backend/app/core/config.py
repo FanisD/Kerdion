@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     CELERY_BROKER_URL: str
     CELERY_RESULT_BACKEND: str
 
+    # Resend Email Settings
+    RESEND_API_KEY: str
+    FRONTEND_URL: str = "http://localhost:3000"
+
     # This tells Pydantic to read from our .env file automatically.
     # Use an absolute path relative to this package so the settings load
     # correctly regardless of the current working directory.

@@ -2,7 +2,7 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Absolute path to the .env file located in the backend package directory
-ENV_FILE_PATH = str(Path(__file__).resolve().parents[1] / ".env")
+ENV_FILE_PATH = str(Path(__file__).resolve().parents[2] / ".env")
 
 class Settings(BaseSettings):
     # Core Settings
@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     # Redis/Celery Settings
     CELERY_BROKER_URL: str
     CELERY_RESULT_BACKEND: str
+
+    # Resend Email Settings
+    RESEND_API_KEY: str
+    FRONTEND_URL: str = "http://localhost:3000"
 
     # This tells Pydantic to read from our .env file automatically.
     # Use an absolute path relative to this package so the settings load

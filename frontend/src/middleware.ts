@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SESSION_COOKIE } from "@/lib/auth";
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const isAuthenticated = Boolean(request.cookies.get(SESSION_COOKIE)?.value);
 
   if (!isAuthenticated) {
@@ -13,5 +13,7 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!login|register|verify-pending|verify-email|api/auth|_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    "/((?!login|register|verify-pending|verify-email|api|_next/static|_next/image|favicon.ico).*)",
+  ],
 };

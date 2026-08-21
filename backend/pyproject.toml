@@ -26,6 +26,7 @@ email-validator = "^2.1.1"
 # Dockerfile can install them in an earlier, independently-cached layer -
 # adding/bumping a lightweight dep above shouldn't force torch et al. to
 # reinstall from scratch on every build.
+resend = "^2.39.0"
 [tool.poetry.group.heavy.dependencies]
 pandas = "^2.2.1"             # Data manipulation for ML
 numpy = "^1.26.4"             # Array calculations for ML

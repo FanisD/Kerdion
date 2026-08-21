@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import hash_password, verify_password
 from app.models.user import User
-from app.schemas.user import UserCreate
+from app.schemas.user import UserCreate, UserUpdate
 
 
 async def get_user_by_email(db: AsyncSession, email: str) -> Optional[User]:
@@ -38,3 +38,34 @@ async def authenticate_user(db: AsyncSession, email: str, password: str) -> Opti
     if user is None or not verify_password(password, user.hashed_password):
         return None
     return user
+
+
+async def verify_user_by_token(db: AsyncSession, token: str) -> Optional[User]:
+    """Find a user by verification token, mark as verified, and clear the token."""
+    result = await db.execute(
+        select(User).where(User.verification_token == token)
+    )
+    user = result.scalars().first()
+    if user is None:
+        return None
+    user.is_verified = True
+    user.verification_token = None
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
+async def update_user(db: AsyncSession, user: User, updates: UserUpdate) -> User:
+    """Apply partial updates to a user record. Returns (user, email_changed)."""
+    update_data = updates.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(user, field, value)
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
+async def delete_user(db: AsyncSession, user: User) -> None:
+    """Permanently delete a user record."""
+    await db.delete(user)
+    await db.commit()

@@ -46,28 +46,43 @@ async def _run_prediction_pipeline():
                 mean_vol = np.mean(hist_vols) if hist_vols else 0
                 proxy_errors = [abs(v - mean_vol) for v in hist_vols]
                 
+                # Trailing 7-day average of realized volatility for signal classification
+                trailing_7d_vol = np.mean(hist_vols[-7:]) if len(hist_vols) >= 7 else mean_vol
+                
+                def classify_signal(pred_vol, baseline):
+                    if pred_vol is None or baseline == 0:
+                        return "normal"
+                    if pred_vol > 1.3 * baseline:
+                        return "spike"
+                    elif pred_vol < 0.7 * baseline:
+                        return "calm"
+                    return "normal"
+                
                 # GARCH Baseline Prediction
                 garch_volatility = ml_engine.predict_garch(coin_prices)
                 garch_qlike = compute_pseudo_qlike(garch_volatility, hist_vols)
                 garch_ci = compute_confidence_interval(garch_volatility, proxy_errors) or (None, None)
+                garch_signal = classify_signal(garch_volatility, trailing_7d_vol)
                 
                 # GRU Baseline Prediction
                 try:
                     gru_volatility = ml_engine.predict_gru(coin_prices)
                     gru_qlike = compute_pseudo_qlike(gru_volatility, hist_vols)
                     gru_ci = compute_confidence_interval(gru_volatility, proxy_errors) or (None, None)
+                    gru_signal = classify_signal(gru_volatility, trailing_7d_vol)
                 except Exception as e:
                     logger.warning(f"Skipping GRU prediction for {coin}: {e}")
-                    gru_volatility, gru_qlike, gru_ci = None, None, (None, None)
+                    gru_volatility, gru_qlike, gru_ci, gru_signal = None, None, (None, None), None
                 
                 # STGNN Masterpiece Prediction
                 try:
                     stgnn_volatility = ml_engine.predict_stgnn(historical_df, target_coin_index=i)
                     stgnn_qlike = compute_pseudo_qlike(stgnn_volatility, hist_vols)
                     stgnn_ci = compute_confidence_interval(stgnn_volatility, proxy_errors) or (None, None)
+                    stgnn_signal = classify_signal(stgnn_volatility, trailing_7d_vol)
                 except Exception as e:
                     logger.warning(f"Skipping STGNN prediction for {coin}: {e}")
-                    stgnn_volatility, stgnn_qlike, stgnn_ci = None, None, (None, None)
+                    stgnn_volatility, stgnn_qlike, stgnn_ci, stgnn_signal = None, None, (None, None), None
 
                 # 3. Save to PostgreSQL Database
                 async with AsyncSessionLocal() as db:
@@ -75,7 +90,8 @@ async def _run_prediction_pipeline():
                     await crud_predictions.create_prediction(
                         db=db, cryptocurrency_pair=coin, model_used="GARCH",
                         predicted_volatility=garch_volatility, qlike_score=garch_qlike,
-                        ci_lower_bound=garch_ci[0], ci_upper_bound=garch_ci[1], timestamp=timestamp_now
+                        ci_lower_bound=garch_ci[0], ci_upper_bound=garch_ci[1], 
+                        signal=garch_signal, timestamp=timestamp_now
                     )
                     
                     # Save GRU
@@ -83,7 +99,8 @@ async def _run_prediction_pipeline():
                         await crud_predictions.create_prediction(
                             db=db, cryptocurrency_pair=coin, model_used="GRU",
                             predicted_volatility=gru_volatility, qlike_score=gru_qlike,
-                            ci_lower_bound=gru_ci[0], ci_upper_bound=gru_ci[1], timestamp=timestamp_now
+                            ci_lower_bound=gru_ci[0], ci_upper_bound=gru_ci[1], 
+                            signal=gru_signal, timestamp=timestamp_now
                         )
                     
                     # Save STGNN
@@ -91,7 +108,8 @@ async def _run_prediction_pipeline():
                         await crud_predictions.create_prediction(
                             db=db, cryptocurrency_pair=coin, model_used="STGNN",
                             predicted_volatility=stgnn_volatility, qlike_score=stgnn_qlike,
-                            ci_lower_bound=stgnn_ci[0], ci_upper_bound=stgnn_ci[1], timestamp=timestamp_now
+                            ci_lower_bound=stgnn_ci[0], ci_upper_bound=stgnn_ci[1], 
+                            signal=stgnn_signal, timestamp=timestamp_now
                         )
 
                 # Construct the multi-model comparative dictionary
@@ -104,7 +122,8 @@ async def _run_prediction_pipeline():
                             "predicted_volatility": garch_volatility,
                             "qlike_historical": garch_qlike,
                             "ci_lower": garch_ci[0],
-                            "ci_upper": garch_ci[1]
+                            "ci_upper": garch_ci[1],
+                            "signal": garch_signal
                         }
                     }
                 }
@@ -114,7 +133,8 @@ async def _run_prediction_pipeline():
                         "predicted_volatility": gru_volatility,
                         "qlike_historical": gru_qlike,
                         "ci_lower": gru_ci[0],
-                        "ci_upper": gru_ci[1]
+                        "ci_upper": gru_ci[1],
+                        "signal": gru_signal
                     }
                     
                 if stgnn_volatility is not None:
@@ -123,6 +143,7 @@ async def _run_prediction_pipeline():
                         "qlike_historical": stgnn_qlike,
                         "ci_lower": stgnn_ci[0],
                         "ci_upper": stgnn_ci[1],
+                        "signal": stgnn_signal,
                         "dm_significance_vs_naive": dm_sig
                     }
                     

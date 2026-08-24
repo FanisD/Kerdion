@@ -7,7 +7,10 @@ import {
   CandlestickSeries,
   type IChartApi,
   type UTCTimestamp,
+  type SeriesMarker,
+  type Time,
 } from "lightweight-charts";
+import type { RosterResponse } from "@/lib/api";
 
 export type Candle = {
   timestamp: string;
@@ -27,10 +30,14 @@ const STYLES = {
 export function PriceChart({
   pair,
   candles,
+  history,
+  activeModel,
   chartRef: externalChartRef,
 }: {
   pair: string;
   candles: Candle[];
+  history?: RosterResponse[];
+  activeModel?: string;
   /** Exposed so the parent can synchronize crosshairs between panels. */
   chartRef?: React.MutableRefObject<IChartApi | null>;
 }) {
@@ -76,6 +83,37 @@ export function PriceChart({
     }));
 
     candlestickSeries.setData(data);
+
+    // Apply markers based on history
+    if (history && activeModel) {
+      const markers: SeriesMarker<Time>[] = [];
+      history.forEach((h) => {
+        const time = (new Date(h.timestamp).getTime() / 1000) as UTCTimestamp;
+        const modelData = h.models[activeModel];
+        if (modelData && modelData.signal) {
+          const predVol = modelData.predicted_volatility.toFixed(2);
+          if (modelData.signal === "spike") {
+            markers.push({
+              time,
+              position: "aboveBar",
+              color: "#f97316", // orange-500
+              shape: "arrowUp",
+              text: `⚡ Spike (${predVol}%)`,
+            });
+          } else if (modelData.signal === "calm") {
+            markers.push({
+              time,
+              position: "belowBar",
+              color: "#0ea5e9", // sky-500
+              shape: "arrowDown",
+              text: `😴 Calm (${predVol}%)`,
+            });
+          }
+        }
+      });
+      candlestickSeries.setMarkers(markers);
+    }
+
     chart.timeScale().fitContent();
 
     const handleResize = () => {
@@ -89,7 +127,7 @@ export function PriceChart({
       internalChartRef.current = null;
       if (externalChartRef) externalChartRef.current = null;
     };
-  }, [candles, externalChartRef]);
+  }, [candles, history, activeModel, externalChartRef]);
 
   return (
     <div className={STYLES.wrapper}>

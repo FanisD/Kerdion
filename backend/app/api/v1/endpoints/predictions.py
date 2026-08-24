@@ -86,7 +86,8 @@ async def get_predictions_by_pair(
             predicted_volatility=p.predicted_volatility,
             qlike_score=p.qlike_score,
             ci_lower_bound=p.ci_lower_bound,
-            ci_upper_bound=p.ci_upper_bound
+            ci_upper_bound=p.ci_upper_bound,
+            signal=p.signal
         )
         
     return list(grouped_data.values())

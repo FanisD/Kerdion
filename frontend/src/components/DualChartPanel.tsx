@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useMemo } from "react";
+import { useRef, useEffect, useMemo, useState } from "react";
 import type { IChartApi } from "lightweight-charts";
 import { PriceChart } from "@/components/PriceChart";
 import { VolatilityChart } from "@/components/VolatilityChart";
@@ -36,6 +36,9 @@ export function DualChartPanel({
 
   // Flag to prevent infinite crosshair echo loops
   const isSyncing = useRef(false);
+
+  // Selected model for the price chart markers
+  const [activeModel, setActiveModel] = useState("stgnn");
 
   // Compute price header stats
   const priceStats = useMemo(() => {
@@ -92,7 +95,7 @@ export function DualChartPanel({
     <div className="flex flex-col gap-6">
       {/* ── Top panel — Market Price ── */}
       <div className={SECTION}>
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
           <div className="flex items-center gap-3">
             <h2 className="text-sm font-semibold tracking-wide text-black dark:text-zinc-50">
               Market Price
@@ -116,9 +119,25 @@ export function DualChartPanel({
               </div>
             )}
           </div>
-          <span className="text-xs text-zinc-500">OHLCV · Binance</span>
+          
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-zinc-500 mr-2">Signals:</span>
+            {(["stgnn", "garch", "gru"] as const).map((model) => (
+              <button
+                key={model}
+                onClick={() => setActiveModel(model)}
+                className={`rounded-md px-2 py-1 font-medium transition-colors ${
+                  activeModel === model
+                    ? "bg-zinc-800 text-zinc-50 dark:bg-zinc-200 dark:text-zinc-900"
+                    : "bg-black/5 text-zinc-500 hover:text-zinc-900 dark:bg-white/5 dark:hover:text-zinc-100"
+                }`}
+              >
+                {model.toUpperCase()}
+              </button>
+            ))}
+          </div>
         </div>
-        <PriceChart pair={pair} candles={candles} chartRef={priceChartRef} />
+        <PriceChart pair={pair} candles={candles} chartRef={priceChartRef} history={history} activeModel={activeModel} />
       </div>
 
       {/* ── Bottom panel — Volatility Arena ── */}

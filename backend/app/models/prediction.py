@@ -34,3 +34,6 @@ class Prediction(Base):
     # This is nullable (can be empty) because when we make a prediction for tomorrow, 
     # we don't know the actual volatility yet. A separate background task will update this later!
     actual_volatility_later: Mapped[float] = mapped_column(Float, nullable=True)
+    
+    # "spike", "normal", or "calm" based on trailing 7-day avg volatility comparison
+    signal: Mapped[str] = mapped_column(String(20), nullable=True)

@@ -44,6 +44,34 @@ class BinanceClient:
         
         return series
 
+    async def fetch_ohlcv(self, symbol: str, limit: int = 30) -> list[dict]:
+        """
+        Fetches the last 'limit' daily candles for a single coin.
+        Returns a list of dicts with timestamp, open, high, low, close, volume.
+        This is intended for the price chart endpoint (JSON-serializable).
+        """
+        async with httpx.AsyncClient() as client:
+            params = {
+                "symbol": symbol.upper(),
+                "interval": "1d",
+                "limit": limit,
+            }
+            response = await client.get(self.BASE_URL, params=params)
+            response.raise_for_status()
+            data = response.json()
+
+        candles = []
+        for row in data:
+            candles.append({
+                "timestamp": pd.to_datetime(row[0], unit="ms").strftime("%Y-%m-%d"),
+                "open": float(row[1]),
+                "high": float(row[2]),
+                "low": float(row[3]),
+                "close": float(row[4]),
+                "volume": float(row[5]),
+            })
+        return candles
+
     async def fetch_sliding_window(self, limit: int = 31) -> pd.DataFrame:
         """
         Fetches the last N days for ALL 10 coins concurrently.

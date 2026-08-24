@@ -73,3 +73,24 @@ To upgrade the Kerdion platform's user management by collecting richer user data
   - Create a designated "Danger Zone" section at the bottom of the dashboard.
   - Add a red "Delete Account" button that triggers a confirmation modal ("Are you absolutely sure? Type your password to confirm").
   - On success, clear the local JWT cookie and redirect to the landing page.
+
+## Phase 5: Execution & Testing Commands
+*Goal: Provide the exact commands needed to run and test these new features locally.*
+
+### 1. Database Migrations (Backend)
+After modifying the SQLAlchemy models in Task 1.1, you must generate and apply the migrations.
+*   **Generate Migration:** `docker compose exec api alembic revision --autogenerate -m "add user profile and verification fields"`
+*   **Apply Migration:** `docker compose exec api alembic upgrade head`
+
+### 2. Running the Platform
+To test the full stack (Frontend + Backend + Postgres + Redis + Celery):
+*   **Start everything:** `docker compose up --build`
+*   *(If you run into issues, try `docker compose down` and then `docker compose up --build` for a fresh start).*
+
+### 3. Testing the Registration Flow
+Once the platform is running at `http://localhost:3000`:
+1.  Go to the `/signup` page and create a new account using the new fields.
+2.  Check the backend logs (`docker compose logs api`) to verify the Resend email was successfully dispatched.
+3.  Check your actual email inbox (or the Resend testing dashboard) for the verification link.
+4.  Click the link to be routed to `/verify-email` and confirm the `GET /api/v1/auth/verify-email` request succeeds (200 OK).
+5.  Proceed to login.

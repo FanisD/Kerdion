@@ -24,6 +24,10 @@ celery_app.conf.update(
     include=["app.worker.tasks"],
     # Scheduled background tasks
     beat_schedule={
+        "predict-every-15-min": {
+            "task": "app.worker.tasks.fetch_data_and_predict_task",
+            "schedule": 900.0,  # Every 15 minutes (in seconds)
+        },
         "rolling-dm-test-daily": {
             "task": "app.worker.tasks.compute_rolling_dm_test",
             "schedule": crontab(hour=3, minute=0),  # Runs every day at 03:00 UTC

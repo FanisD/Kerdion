@@ -1,8 +1,10 @@
+import logging
 import resend
 
 from app.core.config import settings
 
 # Configure the Resend SDK with the API key from settings
+logger = logging.getLogger(__name__)
 resend.api_key = settings.RESEND_API_KEY
 
 
@@ -80,11 +82,15 @@ async def send_verification_email(email: str, token: str, first_name: str) -> No
     </html>
     """
 
-    resend.Emails.send(
-        {
-            "from": "Kerdion <noreply@kerdion.com>",
-            "to": [email],
-            "subject": "Verify your Kerdion account",
-            "html": html_body,
-        }
-    )
+    try:
+        result = resend.Emails.send(
+            {
+                "from": "Kerdion <onboarding@resend.dev>",
+                "to": [email],
+                "subject": "Verify your Kerdion account",
+                "html": html_body,
+            }
+        )
+        logger.info(f"Verification email sent to {email}: {result}")
+    except Exception as e:
+        logger.error(f"Failed to send verification email to {email}: {e}")

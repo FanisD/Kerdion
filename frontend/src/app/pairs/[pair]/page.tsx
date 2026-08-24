@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ErrorState } from "@/components/ErrorState";
-import { PriceChart } from "@/components/PriceChart";
-import { VolatilityChart } from "@/components/VolatilityChart";
+import { DualChartPanel } from "@/components/DualChartPanel";
 import { PredictionTable } from "@/components/PredictionTable";
 import { ModelArenaCard } from "@/components/ModelArenaCard";
 import { DMTestBadge } from "@/components/DMTestBadge";
@@ -123,21 +122,16 @@ export default async function PairDetailPage({
             )}
           </div>
 
-          {/* Price Chart Panel */}
-          <div className={STYLES.section}>
-            <h2 className={STYLES.sectionTitle}>Market Price</h2>
-            {priceResult.ok ? (
-              <PriceChart pair={pair} candles={priceResult.data} />
-            ) : (
-              <ErrorState message={priceResult.error} />
-            )}
-          </div>
-
-          {/* Volatility Arena Panel */}
-          <div className={STYLES.section}>
-            <h2 className={STYLES.sectionTitle}>Volatility chart</h2>
-            <VolatilityChart pair={pair} history={result.data} />
-          </div>
+          {/* Synchronized Dual-Panel: Price Chart + Volatility Arena */}
+          {priceResult.ok ? (
+            <DualChartPanel
+              pair={pair}
+              candles={priceResult.data}
+              history={result.data}
+            />
+          ) : (
+            <ErrorState message={priceResult.error} />
+          )}
 
           <div className={STYLES.section}>
             <h2 className={STYLES.sectionTitle}>Prediction history</h2>

@@ -37,3 +37,6 @@ class Prediction(Base):
     
     # "spike", "normal", or "calm" based on trailing 7-day avg volatility comparison
     signal: Mapped[str] = mapped_column(String(20), nullable=True)
+    
+    # True if the signal matched the actual realized regime, False otherwise
+    signal_correct: Mapped[bool] = mapped_column(nullable=True)

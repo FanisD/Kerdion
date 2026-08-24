@@ -8,6 +8,8 @@ import {
   type IChartApi,
   type ISeriesApi,
   type UTCTimestamp,
+  type SeriesMarker,
+  type Time,
 } from "lightweight-charts";
 import { LivePredictionsClient, type LiveMessage } from "@/lib/wsClient";
 import type { RosterResponse, Candle } from "@/lib/api";
@@ -127,6 +129,8 @@ export function VolatilityChart({
     const stgnnCiUpperData: { time: UTCTimestamp; value: number }[] = [];
     const stgnnCiLowerData: { time: UTCTimestamp; value: number }[] = [];
     const actualData: { time: UTCTimestamp; value: number }[] = [];
+    
+    const stgnnMarkers: SeriesMarker<Time>[] = [];
 
     history.forEach((p) => {
       const time = toChartTime(p.timestamp);
@@ -139,6 +143,15 @@ export function VolatilityChart({
         }
         if (p.models.stgnn.ci_lower_bound != null) {
           stgnnCiLowerData.push({ time, value: p.models.stgnn.ci_lower_bound });
+        }
+        if (p.models.stgnn.signal_correct !== undefined && p.models.stgnn.signal_correct !== null) {
+          stgnnMarkers.push({
+            time,
+            position: 'aboveBar',
+            color: p.models.stgnn.signal_correct ? '#10b981' : '#ef4444',
+            shape: p.models.stgnn.signal_correct ? 'arrowUp' : 'arrowDown',
+            text: p.models.stgnn.signal_correct ? '✅ Hit' : '❌ Miss'
+          });
         }
       }
 
@@ -155,6 +168,10 @@ export function VolatilityChart({
     stgnnGlowSeries.setData(stgnnData);
     stgnnCiUpperSeries.setData(stgnnCiUpperData);
     stgnnCiLowerSeries.setData(stgnnCiLowerData);
+    
+    if (stgnnMarkers.length > 0) {
+      stgnnSeries.setMarkers(stgnnMarkers);
+    }
 
     if (actualData.length > 0) {
       const actualSeries = chart.addSeries(LineSeries, {

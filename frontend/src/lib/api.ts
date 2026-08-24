@@ -96,7 +96,26 @@ export type Candle = {
   volume: number;
   realized_volatility: number | null;
 };
+export type AccuracyStats = {
+  [model: string]: {
+    total: number;
+    hits: number;
+    hit_rate: number;
+  };
+};
 
+export async function getPredictionAccuracy(pair: string): Promise<{ ok: boolean; data: AccuracyStats; error?: string }> {
+  try {
+    const res = await fetch(`${API_URL}/api/v1/predictions/${pair}/accuracy`, {
+      next: { revalidate: 300 }, // Cache for 5 minutes
+    });
+    if (!res.ok) throw new Error("Failed to fetch accuracy stats");
+    const data = await res.json();
+    return { ok: true, data };
+  } catch (err: any) {
+    return { ok: false, data: {}, error: err.message };
+  }
+}
 export async function getPricesForPair(
   pair: string,
   days = 30,

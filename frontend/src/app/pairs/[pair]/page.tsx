@@ -5,7 +5,8 @@ import { DualChartPanel } from "@/components/DualChartPanel";
 import { PredictionTable } from "@/components/PredictionTable";
 import { ModelArenaCard } from "@/components/ModelArenaCard";
 import { DMTestBadge } from "@/components/DMTestBadge";
-import { getPredictionsForPair, getPricesForPair } from "@/lib/api";
+import { HitRateScoreboard } from "@/components/HitRateScoreboard";
+import { getPredictionsForPair, getPricesForPair, getPredictionAccuracy } from "@/lib/api";
 
 const STYLES = {
   container: "mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-10",
@@ -48,10 +49,11 @@ export default async function PairDetailPage({
   const { range: rangeParam } = await searchParams;
   const range: RangeKey = isRangeKey(rangeParam) ? rangeParam : "24h";
 
-  // Fetch predictions and prices in parallel
-  const [result, priceResult] = await Promise.all([
+  // Fetch predictions, prices, and accuracy in parallel
+  const [result, priceResult, accuracyResult] = await Promise.all([
     getPredictionsForPair(pair, RANGES[range].hours),
     getPricesForPair(pair, RANGES[range].days),
+    getPredictionAccuracy(pair),
   ]);
 
   if (result.ok && result.data.length === 0) {
@@ -107,6 +109,8 @@ export default async function PairDetailPage({
         <ErrorState message={result.error} />
       ) : (
         <>
+          {accuracyResult.ok && <HitRateScoreboard stats={accuracyResult.data} />}
+          
           <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
             {latest ? (
               Object.entries(latest.models).map(([modelName, metrics]) => (

@@ -86,6 +86,21 @@ async def _run_prediction_pipeline():
 
                 # 3. Save to PostgreSQL Database
                 async with AsyncSessionLocal() as db:
+                    # Backfill accuracy for unscored predictions
+                    unscored = await db.execute(
+                        select(Prediction).where(
+                            Prediction.cryptocurrency_pair == coin,
+                            Prediction.signal_correct.is_(None),
+                            Prediction.actual_volatility_later.isnot(None),
+                            Prediction.signal.isnot(None)
+                        )
+                    )
+                    for p in unscored.scalars().all():
+                        # Approximate realized regime using the current trailing 7d vol
+                        realized_regime = classify_signal(p.actual_volatility_later, trailing_7d_vol)
+                        p.signal_correct = (realized_regime == p.signal)
+                    await db.commit()
+
                     # Save GARCH
                     await crud_predictions.create_prediction(
                         db=db, cryptocurrency_pair=coin, model_used="GARCH",

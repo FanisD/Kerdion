@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ErrorState } from "@/components/ErrorState";
+import { PriceChart } from "@/components/PriceChart";
 import { VolatilityChart } from "@/components/VolatilityChart";
 import { PredictionTable } from "@/components/PredictionTable";
 import { ModelArenaCard } from "@/components/ModelArenaCard";
 import { DMTestBadge } from "@/components/DMTestBadge";
-import { getPredictionsForPair } from "@/lib/api";
+import { getPredictionsForPair, getPricesForPair } from "@/lib/api";
 
 const STYLES = {
   container: "mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-10",
@@ -26,14 +27,15 @@ const STYLES = {
 };
 
 const RANGES = {
-  "24h": 24,
-  "7d": 24 * 7,
+  "24h": { hours: 24, days: 7 },
+  "7d": { hours: 24 * 7, days: 14 },
+  "30d": { hours: 24 * 30, days: 30 },
 } as const;
 
 type RangeKey = keyof typeof RANGES;
 
 function isRangeKey(value: string | undefined): value is RangeKey {
-  return value === "24h" || value === "7d";
+  return value === "24h" || value === "7d" || value === "30d";
 }
 
 export default async function PairDetailPage({
@@ -47,7 +49,11 @@ export default async function PairDetailPage({
   const { range: rangeParam } = await searchParams;
   const range: RangeKey = isRangeKey(rangeParam) ? rangeParam : "24h";
 
-  const result = await getPredictionsForPair(pair, RANGES[range]);
+  // Fetch predictions and prices in parallel
+  const [result, priceResult] = await Promise.all([
+    getPredictionsForPair(pair, RANGES[range].hours),
+    getPricesForPair(pair, RANGES[range].days),
+  ]);
 
   if (result.ok && result.data.length === 0) {
     notFound();
@@ -117,6 +123,17 @@ export default async function PairDetailPage({
             )}
           </div>
 
+          {/* Price Chart Panel */}
+          <div className={STYLES.section}>
+            <h2 className={STYLES.sectionTitle}>Market Price</h2>
+            {priceResult.ok ? (
+              <PriceChart pair={pair} candles={priceResult.data} />
+            ) : (
+              <ErrorState message={priceResult.error} />
+            )}
+          </div>
+
+          {/* Volatility Arena Panel */}
           <div className={STYLES.section}>
             <h2 className={STYLES.sectionTitle}>Volatility chart</h2>
             <VolatilityChart pair={pair} history={result.data} />

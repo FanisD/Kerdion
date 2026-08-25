@@ -30,22 +30,25 @@ export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: string };
 
 async function fetchFromApi(path: string): Promise<Response | null> {
   const token = await getServerToken();
-  if (!token) {
-    redirect("/login");
-  }
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
   let res: Response;
   try {
     res = await fetch(`${apiUrl}${path}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers,
       cache: "no-store",
     });
   } catch {
     return null;
   }
 
-  if (res.status === 401) {
+  // Only redirect on 401 if the user was actually trying to use a token
+  if (res.status === 401 && token) {
     redirect("/login");
   }
 

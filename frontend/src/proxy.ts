@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SESSION_COOKIE } from "@/lib/auth";
 
+const AUTH_REQUIRED_PATHS = ["/account"];
+
 export function proxy(request: NextRequest) {
   const isAuthenticated = Boolean(request.cookies.get(SESSION_COOKIE)?.value);
+  const pathname = request.nextUrl.pathname;
 
-  if (!isAuthenticated) {
+  // Only redirect to login for pages that truly require authentication
+  const needsAuth = AUTH_REQUIRED_PATHS.some((p) => pathname.startsWith(p));
+
+  if (needsAuth && !isAuthenticated) {
     const loginUrl = new URL("/login", request.url);
     return NextResponse.redirect(loginUrl);
   }

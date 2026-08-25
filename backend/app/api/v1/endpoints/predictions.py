@@ -6,12 +6,11 @@ from datetime import datetime, timedelta, timezone
 import json
 import redis.asyncio as redis
 
-from app.api.deps import get_current_user
 from app.core.database import get_db
 from app.models.prediction import Prediction
 from app.schemas.prediction import PredictionResponse, RosterResponse, ModelRosterMetrics
 
-router = APIRouter(dependencies=[Depends(get_current_user)])
+router = APIRouter()
 
 @router.get("/", response_model=List[PredictionResponse])
 async def get_all_predictions(

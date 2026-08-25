@@ -35,6 +35,16 @@ export function Navbar({ isAuthenticated }: { isAuthenticated: boolean }) {
           </Link>
         )}
         {isAuthenticated && <LogoutButton />}
+        {!isAuthenticated && (
+          <>
+            <Link href="/login" className="transition-colors hover:text-[var(--text-primary)]">
+              Log in
+            </Link>
+            <Link href="/register" className="rounded-lg bg-[var(--accent-primary)] px-4 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90">
+              Sign Up
+            </Link>
+          </>
+        )}
       </div>
 
       {/* Mobile Hamburger Icon */}
@@ -81,6 +91,16 @@ export function Navbar({ isAuthenticated }: { isAuthenticated: boolean }) {
             <div className="pt-2">
               <LogoutButton />
             </div>
+          )}
+          {!isAuthenticated && (
+            <>
+              <Link href="/login" onClick={() => setIsOpen(false)} className="font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]">
+                Log in
+              </Link>
+              <Link href="/register" onClick={() => setIsOpen(false)} className="font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]">
+                Sign Up
+              </Link>
+            </>
           )}
         </div>
       )}

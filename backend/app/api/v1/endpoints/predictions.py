@@ -100,30 +100,53 @@ async def get_prediction_accuracy(
     days: int = Query(30, description="Calculate accuracy over the last X days")
 ):
     """
-    Returns hit rate accuracy statistics for each model.
+    Returns per-model accuracy statistics including hit rate, RMSE, MAE, and avg QLIKE.
     """
+    from app.services.loss_engine import compute_rmse, compute_mae
+
     since = datetime.now(timezone.utc) - timedelta(days=days)
     
+    # Fetch ALL predictions for the pair in the time window
     result = await db.execute(
         select(Prediction)
         .where(Prediction.cryptocurrency_pair == pair.upper())
         .where(Prediction.timestamp >= since)
-        .where(Prediction.signal_correct.isnot(None))
     )
     predictions = result.scalars().all()
     
-    stats = {}
+    # Group by model
+    by_model: dict[str, list] = {}
     for p in predictions:
         model = p.model_used.lower()
-        if model not in stats:
-            stats[model] = {"total": 0, "hits": 0, "hit_rate": 0.0}
-            
-        stats[model]["total"] += 1
-        if p.signal_correct:
-            stats[model]["hits"] += 1
-            
-    for model in stats:
-        if stats[model]["total"] > 0:
-            stats[model]["hit_rate"] = round(stats[model]["hits"] / stats[model]["total"], 3)
+        by_model.setdefault(model, []).append(p)
+    
+    stats = {}
+    for model, preds in by_model.items():
+        # Hit rate (from signal_correct)
+        graded = [p for p in preds if p.signal_correct is not None]
+        hits = sum(1 for p in graded if p.signal_correct)
+        total_graded = len(graded)
+        hit_rate = round(hits / total_graded, 3) if total_graded > 0 else 0.0
+        
+        # RMSE, MAE, avg QLIKE (from predictions that have actual_volatility_later)
+        with_actuals = [p for p in preds if p.actual_volatility_later is not None]
+        
+        actuals = [p.actual_volatility_later for p in with_actuals]
+        predicted = [p.predicted_volatility for p in with_actuals]
+        qlike_scores = [p.qlike_score for p in with_actuals if p.qlike_score is not None]
+        
+        rmse = compute_rmse(actuals, predicted)
+        mae = compute_mae(actuals, predicted)
+        avg_qlike = round(sum(qlike_scores) / len(qlike_scores), 4) if qlike_scores else None
+        
+        stats[model] = {
+            "total": total_graded,
+            "hits": hits,
+            "hit_rate": hit_rate,
+            "rmse": round(rmse, 4) if rmse is not None else None,
+            "mae": round(mae, 4) if mae is not None else None,
+            "avg_qlike": avg_qlike,
+            "n_evaluated": len(with_actuals),
+        }
             
     return stats

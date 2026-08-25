@@ -101,6 +101,10 @@ export type AccuracyStats = {
     total: number;
     hits: number;
     hit_rate: number;
+    rmse: number | null;
+    mae: number | null;
+    avg_qlike: number | null;
+    n_evaluated: number;
   };
 };
 

@@ -209,3 +209,57 @@ def compute_diebold_mariano(
         "significance": significance,
         "n_observations": T
     }
+
+
+# ==========================================
+# RMSE & MAE METRICS
+# Standard regression evaluation metrics
+# ==========================================
+
+
+def compute_rmse(
+    actual_volatilities: list[float],
+    predicted_volatilities: list[float]
+) -> Optional[float]:
+    """
+    Root Mean Squared Error — penalizes large misses more heavily.
+
+    Formula:
+        RMSE = sqrt( mean( (actual - predicted)² ) )
+
+    Returns None if inputs are invalid or empty.
+    """
+    if not actual_volatilities or not predicted_volatilities:
+        return None
+    if len(actual_volatilities) != len(predicted_volatilities):
+        logger.warning("RMSE skipped: array lengths do not match.")
+        return None
+
+    actuals = np.array(actual_volatilities, dtype=np.float64)
+    preds = np.array(predicted_volatilities, dtype=np.float64)
+
+    return float(np.sqrt(np.mean((actuals - preds) ** 2)))
+
+
+def compute_mae(
+    actual_volatilities: list[float],
+    predicted_volatilities: list[float]
+) -> Optional[float]:
+    """
+    Mean Absolute Error — the average magnitude of prediction errors.
+
+    Formula:
+        MAE = mean( |actual - predicted| )
+
+    Returns None if inputs are invalid or empty.
+    """
+    if not actual_volatilities or not predicted_volatilities:
+        return None
+    if len(actual_volatilities) != len(predicted_volatilities):
+        logger.warning("MAE skipped: array lengths do not match.")
+        return None
+
+    actuals = np.array(actual_volatilities, dtype=np.float64)
+    preds = np.array(predicted_volatilities, dtype=np.float64)
+
+    return float(np.mean(np.abs(actuals - preds)))

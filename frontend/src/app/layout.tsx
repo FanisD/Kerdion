@@ -40,6 +40,12 @@ export default async function RootLayout({
       <body className={STYLES.body}>
         <Navbar isAuthenticated={isAuthenticated} />
         <main className={STYLES.main}>{children}</main>
+        <footer className="border-t border-[var(--border-subtle)] bg-[var(--bg-surface)]/50 px-6 py-6 text-center text-xs text-[var(--text-secondary)] backdrop-blur-md">
+          <p>© 2026 Kerdion. All rights reserved.</p>
+          <p className="mt-1">
+            Created by <span className="font-semibold text-[var(--text-primary)]">Fanis Dimitriou</span>
+          </p>
+        </footer>
       </body>
     </html>
   );

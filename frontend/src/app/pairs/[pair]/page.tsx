@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ErrorState } from "@/components/ErrorState";
-import { VolatilityChart } from "@/components/VolatilityChart";
+import { DualChartPanel } from "@/components/DualChartPanel";
 import { PredictionTable } from "@/components/PredictionTable";
 import { ModelArenaCard } from "@/components/ModelArenaCard";
 import { DMTestBadge } from "@/components/DMTestBadge";
-import { getPredictionsForPair } from "@/lib/api";
+import { HitRateScoreboard } from "@/components/HitRateScoreboard";
+import { getPredictionsForPair, getPricesForPair, getPredictionAccuracy } from "@/lib/api";
 
 const STYLES = {
   container: "mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-10",
@@ -26,14 +27,15 @@ const STYLES = {
 };
 
 const RANGES = {
-  "24h": 24,
-  "7d": 24 * 7,
+  "24h": { hours: 24, days: 7 },
+  "7d": { hours: 24 * 7, days: 14 },
+  "30d": { hours: 24 * 30, days: 30 },
 } as const;
 
 type RangeKey = keyof typeof RANGES;
 
 function isRangeKey(value: string | undefined): value is RangeKey {
-  return value === "24h" || value === "7d";
+  return value === "24h" || value === "7d" || value === "30d";
 }
 
 export default async function PairDetailPage({
@@ -47,7 +49,12 @@ export default async function PairDetailPage({
   const { range: rangeParam } = await searchParams;
   const range: RangeKey = isRangeKey(rangeParam) ? rangeParam : "24h";
 
-  const result = await getPredictionsForPair(pair, RANGES[range]);
+  // Fetch predictions, prices, and accuracy in parallel
+  const [result, priceResult, accuracyResult] = await Promise.all([
+    getPredictionsForPair(pair, RANGES[range].hours),
+    getPricesForPair(pair, RANGES[range].days),
+    getPredictionAccuracy(pair),
+  ]);
 
   if (result.ok && result.data.length === 0) {
     notFound();
@@ -102,6 +109,8 @@ export default async function PairDetailPage({
         <ErrorState message={result.error} />
       ) : (
         <>
+          {accuracyResult.ok && <HitRateScoreboard stats={accuracyResult.data} />}
+          
           <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
             {latest ? (
               Object.entries(latest.models).map(([modelName, metrics]) => (
@@ -117,10 +126,16 @@ export default async function PairDetailPage({
             )}
           </div>
 
-          <div className={STYLES.section}>
-            <h2 className={STYLES.sectionTitle}>Volatility chart</h2>
-            <VolatilityChart pair={pair} history={result.data} />
-          </div>
+          {/* Synchronized Dual-Panel: Price Chart + Volatility Arena */}
+          {priceResult.ok ? (
+            <DualChartPanel
+              pair={pair}
+              candles={priceResult.data}
+              history={result.data}
+            />
+          ) : (
+            <ErrorState message={priceResult.error} />
+          )}
 
           <div className={STYLES.section}>
             <h2 className={STYLES.sectionTitle}>Prediction history</h2>

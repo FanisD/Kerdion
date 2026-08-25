@@ -86,7 +86,44 @@ async def get_predictions_by_pair(
             predicted_volatility=p.predicted_volatility,
             qlike_score=p.qlike_score,
             ci_lower_bound=p.ci_lower_bound,
-            ci_upper_bound=p.ci_upper_bound
+            ci_upper_bound=p.ci_upper_bound,
+            signal=p.signal,
+            signal_correct=p.signal_correct
         )
         
     return list(grouped_data.values())
+
+@router.get("/{pair}/accuracy")
+async def get_prediction_accuracy(
+    pair: str,
+    db: AsyncSession = Depends(get_db),
+    days: int = Query(30, description="Calculate accuracy over the last X days")
+):
+    """
+    Returns hit rate accuracy statistics for each model.
+    """
+    since = datetime.now(timezone.utc) - timedelta(days=days)
+    
+    result = await db.execute(
+        select(Prediction)
+        .where(Prediction.cryptocurrency_pair == pair.upper())
+        .where(Prediction.timestamp >= since)
+        .where(Prediction.signal_correct.isnot(None))
+    )
+    predictions = result.scalars().all()
+    
+    stats = {}
+    for p in predictions:
+        model = p.model_used.lower()
+        if model not in stats:
+            stats[model] = {"total": 0, "hits": 0, "hit_rate": 0.0}
+            
+        stats[model]["total"] += 1
+        if p.signal_correct:
+            stats[model]["hits"] += 1
+            
+    for model in stats:
+        if stats[model]["total"] > 0:
+            stats[model]["hit_rate"] = round(stats[model]["hits"] / stats[model]["total"], 3)
+            
+    return stats

@@ -8,9 +8,11 @@ import {
   type IChartApi,
   type ISeriesApi,
   type UTCTimestamp,
+  type SeriesMarker,
+  type Time,
 } from "lightweight-charts";
 import { LivePredictionsClient, type LiveMessage } from "@/lib/wsClient";
-import type { RosterResponse } from "@/lib/api";
+import type { RosterResponse, Candle } from "@/lib/api";
 
 const STYLES = {
   wrapper: "relative w-full rounded-xl overflow-hidden glass-panel",
@@ -23,16 +25,28 @@ const COLORS = {
   garch: "#FF7B00",
   gru: "#B528FF",
   stgnn: "#00E5FF",
-  actual: "#FFFFFF",
+  truth: "#FFFFFF",
 };
 
 function toChartTime(timestamp: string): UTCTimestamp {
   return Math.floor(new Date(timestamp).getTime() / 1000) as UTCTimestamp;
 }
 
-export function VolatilityChart({ pair, history }: { pair: string; history: RosterResponse[] }) {
+export function VolatilityChart({
+  pair,
+  history,
+  candles,
+  chartRef: externalChartRef,
+}: {
+  pair: string;
+  history: RosterResponse[];
+  /** Price candles containing realized_volatility for the Truth Line. */
+  candles?: Candle[];
+  /** Exposed so the parent can synchronize crosshairs between panels. */
+  chartRef?: React.MutableRefObject<IChartApi | null>;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const chartRef = useRef<IChartApi | null>(null);
+  const internalChartRef = useRef<IChartApi | null>(null);
   const garchSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
   const gruSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
   const stgnnSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
@@ -40,6 +54,7 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Rost
   const stgnnCiUpperRef = useRef<ISeriesApi<"Line"> | null>(null);
   const stgnnCiLowerRef = useRef<ISeriesApi<"Line"> | null>(null);
   const actualSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const truthSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -58,8 +73,31 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Rost
       },
       timeScale: { timeVisible: true },
     });
-    chartRef.current = chart;
 
+    internalChartRef.current = chart;
+    if (externalChartRef) externalChartRef.current = chart;
+
+    // --- Truth Line (realized volatility from price data) ---
+    const truthSeries = chart.addSeries(LineSeries, {
+      color: COLORS.truth,
+      lineWidth: 3,
+      lineStyle: 0,
+      title: "Truth",
+      crosshairMarkerVisible: true,
+    });
+    truthSeriesRef.current = truthSeries;
+
+    if (candles && candles.length > 0) {
+      const truthData = candles
+        .filter((c) => c.realized_volatility != null)
+        .map((c) => ({
+          time: (new Date(c.timestamp).getTime() / 1000) as UTCTimestamp,
+          value: c.realized_volatility as number,
+        }));
+      truthSeries.setData(truthData);
+    }
+
+    // --- Model prediction lines ---
     const garchSeries = chart.addSeries(LineSeries, { color: COLORS.garch, lineWidth: 1, lineStyle: 2, title: "GARCH" });
     const gruSeries = chart.addSeries(LineSeries, { color: COLORS.gru, lineWidth: 1, lineStyle: 2, title: "GRU" });
     const stgnnGlowSeries = chart.addSeries(LineSeries, { color: "rgba(0, 229, 255, 0.2)", lineWidth: 8 as any, title: "", crosshairMarkerVisible: false, lastValueVisible: false });
@@ -91,6 +129,8 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Rost
     const stgnnCiUpperData: { time: UTCTimestamp; value: number }[] = [];
     const stgnnCiLowerData: { time: UTCTimestamp; value: number }[] = [];
     const actualData: { time: UTCTimestamp; value: number }[] = [];
+    
+    const stgnnMarkers: SeriesMarker<Time>[] = [];
 
     history.forEach((p) => {
       const time = toChartTime(p.timestamp);
@@ -103,6 +143,15 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Rost
         }
         if (p.models.stgnn.ci_lower_bound != null) {
           stgnnCiLowerData.push({ time, value: p.models.stgnn.ci_lower_bound });
+        }
+        if (p.models.stgnn.signal_correct !== undefined && p.models.stgnn.signal_correct !== null) {
+          stgnnMarkers.push({
+            time,
+            position: 'aboveBar',
+            color: p.models.stgnn.signal_correct ? '#10b981' : '#ef4444',
+            shape: p.models.stgnn.signal_correct ? 'arrowUp' : 'arrowDown',
+            text: p.models.stgnn.signal_correct ? '✅ Hit' : '❌ Miss'
+          });
         }
       }
 
@@ -119,13 +168,17 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Rost
     stgnnGlowSeries.setData(stgnnData);
     stgnnCiUpperSeries.setData(stgnnCiUpperData);
     stgnnCiLowerSeries.setData(stgnnCiLowerData);
+    
+    if (stgnnMarkers.length > 0) {
+      stgnnSeries.setMarkers(stgnnMarkers);
+    }
 
     if (actualData.length > 0) {
       const actualSeries = chart.addSeries(LineSeries, {
-        color: COLORS.actual,
-        lineWidth: 3,
-        lineStyle: 0,
-        title: "Actual",
+        color: "#FACC15",
+        lineWidth: 2,
+        lineStyle: 2,
+        title: "Actual (backfill)",
       });
       actualSeriesRef.current = actualSeries;
       actualSeries.setData(actualData);
@@ -141,7 +194,8 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Rost
     return () => {
       window.removeEventListener("resize", handleResize);
       chart.remove();
-      chartRef.current = null;
+      internalChartRef.current = null;
+      if (externalChartRef) externalChartRef.current = null;
       garchSeriesRef.current = null;
       gruSeriesRef.current = null;
       stgnnSeriesRef.current = null;
@@ -149,8 +203,9 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Rost
       stgnnCiUpperRef.current = null;
       stgnnCiLowerRef.current = null;
       actualSeriesRef.current = null;
+      truthSeriesRef.current = null;
     };
-  }, [history]);
+  }, [history, candles, externalChartRef]);
 
   // Separate from the effect above: live ticks append onto whatever series
   // is currently rendered via .update(), without rebuilding the chart or
@@ -201,6 +256,10 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Rost
     <div className={STYLES.wrapper}>
       <div className={STYLES.legend}>
         <div className={STYLES.legendItem}>
+          <span className="h-0.5 w-4 rounded-full" style={{ backgroundColor: COLORS.truth }} />
+          <span>Truth (Realized)</span>
+        </div>
+        <div className={STYLES.legendItem}>
           <span className="h-2 w-2 rounded-full shadow-[0_0_8px_var(--accent-primary)]" style={{ backgroundColor: COLORS.stgnn }} />
           <span>ST-GNN</span>
         </div>
@@ -211,10 +270,6 @@ export function VolatilityChart({ pair, history }: { pair: string; history: Rost
         <div className={STYLES.legendItem}>
           <span className="h-2 w-2 rounded-full shadow-[0_0_8px_var(--accent-gru)]" style={{ backgroundColor: COLORS.gru }} />
           <span>GRU</span>
-        </div>
-        <div className={STYLES.legendItem}>
-          <span className="h-2 w-2 border-b-2" style={{ borderColor: COLORS.actual }} />
-          <span className="text-[var(--text-secondary)]">Actual (Truth)</span>
         </div>
       </div>
       <div ref={containerRef} className={STYLES.container} />

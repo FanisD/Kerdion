@@ -82,3 +82,53 @@ export async function getDieboldMarianoResult(): Promise<ApiResult<any>> {
   if (!res.ok) return { ok: false, error: "The prediction service returned an error." };
   return { ok: true, data: await res.json() };
 }
+
+// ==========================================
+// Price Data (public — no auth required)
+// ==========================================
+
+export type Candle = {
+  timestamp: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+  realized_volatility: number | null;
+};
+export type AccuracyStats = {
+  [model: string]: {
+    total: number;
+    hits: number;
+    hit_rate: number;
+  };
+};
+
+export async function getPredictionAccuracy(pair: string): Promise<{ ok: boolean; data: AccuracyStats; error?: string }> {
+  try {
+    const res = await fetch(`${API_URL}/api/v1/predictions/${pair}/accuracy`, {
+      next: { revalidate: 300 }, // Cache for 5 minutes
+    });
+    if (!res.ok) throw new Error("Failed to fetch accuracy stats");
+    const data = await res.json();
+    return { ok: true, data };
+  } catch (err: any) {
+    return { ok: false, data: {}, error: err.message };
+  }
+}
+export async function getPricesForPair(
+  pair: string,
+  days = 30,
+): Promise<ApiResult<Candle[]>> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  let res: Response;
+  try {
+    res = await fetch(`${apiUrl}/api/v1/prices/${pair}?days=${days}`, {
+      cache: "no-store",
+    });
+  } catch {
+    return { ok: false, error: "Could not reach the price service." };
+  }
+  if (!res.ok) return { ok: false, error: "The price service returned an error." };
+  return { ok: true, data: await res.json() };
+}

@@ -16,6 +16,7 @@ async def create_prediction(
     qlike_score: Optional[float] = None,
     ci_lower_bound: Optional[float] = None,
     ci_upper_bound: Optional[float] = None,
+    signal: Optional[str] = None,
     timestamp: Optional[datetime] = None,
 ) -> Prediction:
     """Insert a new prediction row into the database."""
@@ -27,6 +28,7 @@ async def create_prediction(
         qlike_score=qlike_score,
         ci_lower_bound=ci_lower_bound,
         ci_upper_bound=ci_upper_bound,
+        signal=signal,
         timestamp=timestamp or datetime.now(timezone.utc),
     )
     db.add(prediction)

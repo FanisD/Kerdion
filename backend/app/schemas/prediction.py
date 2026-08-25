@@ -10,6 +10,8 @@ class PredictionBase(BaseModel):
     qlike_score: Optional[float] = None
     ci_lower_bound: Optional[float] = None
     ci_upper_bound: Optional[float] = None
+    signal: Optional[str] = None
+    signal_correct: Optional[bool] = None
     timestamp: datetime
 
 class PredictionResponse(PredictionBase):
@@ -23,6 +25,8 @@ class ModelRosterMetrics(BaseModel):
     qlike_score: Optional[float] = None
     ci_lower_bound: Optional[float] = None
     ci_upper_bound: Optional[float] = None
+    signal: Optional[str] = None
+    signal_correct: Optional[bool] = None
 
 class RosterResponse(BaseModel):
     timestamp: datetime

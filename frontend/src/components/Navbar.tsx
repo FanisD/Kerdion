@@ -22,6 +22,9 @@ export function Navbar({ isAuthenticated }: { isAuthenticated: boolean }) {
         <Link href="/topology" className="transition-colors hover:text-[var(--text-primary)]">
           Topology
         </Link>
+        <Link href="/about" className="transition-colors hover:text-[var(--text-primary)]">
+          About
+        </Link>
         <ConnectionStatusBadge trackLiveStatus={isAuthenticated} />
         {isAuthenticated && (
           <Link href="/account" className="transition-colors hover:text-[var(--text-primary)]">
@@ -62,6 +65,9 @@ export function Navbar({ isAuthenticated }: { isAuthenticated: boolean }) {
           </Link>
           <Link href="/topology" onClick={() => setIsOpen(false)} className="font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]">
             Topology
+          </Link>
+          <Link href="/about" onClick={() => setIsOpen(false)} className="font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]">
+            About
           </Link>
           <div className="border-t border-[var(--border-subtle)] pt-4">
             <ConnectionStatusBadge trackLiveStatus={isAuthenticated} />
